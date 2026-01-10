@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+@font-face {
+  font-family: 'Big Shoulders Display';
+  font-style: normal;
+  font-display: block;
+  src: url('/fonts/big_shoulders_display.woff2') format('woff2');
+}
+
+:root {
+  --color-chip: #0055ff;
+  --color-red: #f33;
+  --color-dark-red: #b60000;
+  --color-black: #161718;
+  --color-cyan: #8fe;
+  --color-dark-cyan: #00467f;
+  --color-white: #fff;
+  --color-off-white: #ffffef;
+  --color-blue-white: #deffff;
+  --color-gold: #ffd900;
+
+  font-size: 10px;
+  font-family: 'DM Sans', 'Segoe UI', sans-serif;
+  color: var(--color-black);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (min-width: 600px) and (min-height: 768px) {
+  :root {
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 1024px) and (min-height: 900px) {
+  :root {
+    font-size: 14px;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-dark-cyan);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  font-weight: 500;
+  margin: 0;
+}
+
+h1 > span {
+  color: var(--color-red);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+  }
+}
