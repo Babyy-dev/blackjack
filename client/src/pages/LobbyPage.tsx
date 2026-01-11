@@ -48,7 +48,7 @@ const LobbyPage = () => {
   }, [error, clearError])
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-14">
+    <div className="mx-auto flex w-full  flex-col gap-10 px-6 py-14">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/70">

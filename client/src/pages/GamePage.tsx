@@ -25,7 +25,7 @@ const GamePage = () => {
   if (!currentTableId) {
     return (
       <div className="min-h-screen bg-[#02131a] text-white">
-        <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-center gap-6 px-6 text-center">
+        <div className="mx-auto flex min-h-screen w-full  flex-col items-center justify-center gap-6 px-6 text-center">
           <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/80">
             Table required
           </p>

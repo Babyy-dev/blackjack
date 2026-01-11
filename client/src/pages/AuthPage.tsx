@@ -51,7 +51,7 @@ const AuthPage = () => {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-10 px-6 py-16">
+    <div className="mx-auto flex w-full  flex-col gap-10 px-6 py-16">
       <header className="text-center">
         <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/80">Member lounge</p>
         <h1 className="mt-4 text-5xl font-display uppercase tracking-[0.35rem] text-white">
@@ -64,7 +64,7 @@ const AuthPage = () => {
         </p>
       </header>
 
-      <div className="mx-auto w-full max-w-lg rounded-3xl border border-white/10 bg-white/5 p-8">
+      <div className="mx-auto w-full max-w-xl rounded-3xl border border-white/10 bg-white/5 p-8">
         <div className="flex justify-center gap-4">
           <button
             type="button"

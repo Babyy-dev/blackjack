@@ -1,8 +1,8 @@
-﻿import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 const LandingPage = () => {
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 py-14">
+    <div className="mx-auto flex w-full  flex-col gap-20 px-6 py-16">
       <section className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="flex flex-col gap-6">
           <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/80">
@@ -78,6 +78,43 @@ const LandingPage = () => {
             <p className="mt-3 text-sm text-white/60">{item.copy}</p>
           </div>
         ))}
+      </section>
+
+      <section className="grid gap-8 rounded-3xl border border-white/10 bg-[#071a22]/80 p-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/70">How it works</p>
+          <h2 className="mt-4 text-3xl font-display uppercase tracking-[0.25rem] text-white">
+            From lobby to last hand
+          </h2>
+          <p className="mt-4 text-sm text-white/70">
+            Build your table, sync with the dealer, and let the server run every card so the
+            action stays fair and fast.
+          </p>
+        </div>
+        <div className="space-y-4 text-sm text-white/70">
+          {[
+            {
+              title: '01. Create or join a table',
+              copy: 'Pick a public lounge or lock it with a private invite code.',
+            },
+            {
+              title: '02. Ready up with the table',
+              copy: 'Confirm your seat and sync the hand start with the group.',
+            },
+            {
+              title: '03. Play with live stakes',
+              copy: 'The server deals, validates moves, and updates balances in real time.',
+            },
+          ].map((step) => (
+            <div
+              key={step.title}
+              className="rounded-2xl border border-white/10 bg-white/5 p-4"
+            >
+              <p className="text-xs uppercase text-amber-200">{step.title}</p>
+              <p className="mt-2">{step.copy}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="grid gap-6 rounded-3xl border border-amber-300/20 bg-gradient-to-br from-[#0b1f26] via-[#13252f] to-[#0b1f26] p-8 text-white/80 md:grid-cols-[1.2fr_0.8fr]">

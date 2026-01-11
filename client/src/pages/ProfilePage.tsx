@@ -44,7 +44,7 @@ const ProfilePage = () => {
 
   if (!user) {
     return (
-      <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-4 px-6 py-20 text-center">
+      <div className="mx-auto flex w-full  flex-col items-center gap-4 px-6 py-20 text-center">
         <h1 className="text-4xl font-display uppercase tracking-[0.3rem] text-white">
           Member vault
         </h1>
@@ -55,7 +55,7 @@ const ProfilePage = () => {
 
   if (profileQuery.isLoading) {
     return (
-      <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-4 px-6 py-20 text-center">
+      <div className="mx-auto flex w-full  flex-col items-center gap-4 px-6 py-20 text-center">
         <h1 className="text-4xl font-display uppercase tracking-[0.3rem] text-white">
           Loading profile
         </h1>
@@ -66,7 +66,7 @@ const ProfilePage = () => {
 
   if (profileQuery.isError) {
     return (
-      <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-4 px-6 py-20 text-center">
+      <div className="mx-auto flex w-full  flex-col items-center gap-4 px-6 py-20 text-center">
         <h1 className="text-4xl font-display uppercase tracking-[0.3rem] text-white">
           Vault unavailable
         </h1>
@@ -80,7 +80,7 @@ const ProfilePage = () => {
     : null
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-10 px-6 py-16">
+    <div className="mx-auto flex w-full  flex-col gap-10 px-6 py-16">
       <header>
         <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/80">Vault</p>
         <h1 className="mt-4 text-4xl font-display uppercase tracking-[0.3rem] text-white">

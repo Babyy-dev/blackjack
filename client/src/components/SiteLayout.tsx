@@ -12,7 +12,7 @@ const SiteLayout = () => {
       <div className="pointer-events-none absolute bottom-0 right-0 h-80 w-80 rounded-full bg-[#0c4a56]/50 blur-[110px]" />
 
       <header className="sticky top-0 z-20 border-b border-white/10 bg-[#02131a]/80 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
+        <div className="site-shell flex items-center justify-between px-6 py-4">
           <NavLink
             to="/"
             className="text-2xl font-display uppercase tracking-[0.3rem] text-white"
@@ -73,12 +73,12 @@ const SiteLayout = () => {
         </div>
       </header>
 
-      <main className="relative z-10">
+      <main className="site-main relative z-10">
         <Outlet />
       </main>
 
       <footer className="relative z-10 border-t border-white/10">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-6 py-6 text-xs uppercase tracking-[0.2rem] text-white/50 md:flex-row md:items-center md:justify-between">
+        <div className="site-shell flex flex-col gap-2 px-6 py-6 text-xs uppercase tracking-[0.2rem] text-white/50 md:flex-row md:items-center md:justify-between">
           <span>Vlackjack Casino</span>
           <span>Play responsibly. 21+ only.</span>
         </div>

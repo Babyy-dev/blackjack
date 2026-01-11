@@ -36,7 +36,7 @@ const TablePage = () => {
       : 'Waiting for players to ready up before the round begins.'
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-12">
+    <div className="mx-auto flex w-full  flex-col gap-8 px-6 py-12">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/70">Table</p>

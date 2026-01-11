@@ -22,7 +22,7 @@ const RequireAdmin = ({ children }: RequireAdminProps) => {
 
   if (!user?.is_admin) {
     return (
-      <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 px-6 py-20 text-center">
+      <div className="mx-auto flex w-full  flex-col items-center gap-4 px-6 py-20 text-center">
         <h1 className="text-3xl font-display uppercase tracking-[0.3rem] text-white">
           Admin access only
         </h1>
