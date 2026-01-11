@@ -20,6 +20,7 @@ const LobbyPage = () => {
   const [maxPlayers, setMaxPlayers] = useState(6)
   const [isPrivate, setIsPrivate] = useState(false)
   const [joinCode, setJoinCode] = useState('')
+  const [pendingNavigation, setPendingNavigation] = useState(false)
 
   const connectionLabel = useMemo(() => {
     if (isConnected) return 'Connected'
@@ -30,6 +31,13 @@ const LobbyPage = () => {
   useEffect(() => {
     if (isConnected) refreshLobby()
   }, [isConnected, refreshLobby])
+
+  useEffect(() => {
+    if (pendingNavigation && currentTableId) {
+      navigate(`/table/${currentTableId}`)
+      setPendingNavigation(false)
+    }
+  }, [pendingNavigation, currentTableId, navigate])
 
   useEffect(() => {
     if (error) {
@@ -109,6 +117,7 @@ const LobbyPage = () => {
                 const normalizedMax = Number.isFinite(maxPlayers)
                   ? Math.min(Math.max(maxPlayers, 2), 8)
                   : 6
+                setPendingNavigation(true)
                 createTable({
                   name: name.trim(),
                   maxPlayers: normalizedMax,
@@ -179,7 +188,7 @@ const LobbyPage = () => {
                   <p className="text-sm font-semibold text-white">{table.name}</p>
                   <p className="text-xs uppercase tracking-[0.2rem] text-white/50">
                     {table.playerCount}/{table.maxPlayers} players
-                    {table.isPrivate ? ' • private' : ''}
+                    {table.isPrivate ? ' (private)' : ''}
                   </p>
                 </div>
                 <button

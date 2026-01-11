@@ -9,6 +9,7 @@ const TablePage = () => {
   const user = useAuthStore((state) => state.user)
   const {
     currentTable,
+    currentTableId,
     isConnected,
     joinTable,
     leaveTable,
@@ -27,6 +28,7 @@ const TablePage = () => {
 
   const readyCount = players.filter((player) => player.isReady).length
   const allReady = players.length > 0 && readyCount === players.length
+  const canStartGame = Boolean(currentTableId && myPlayer && isConnected)
   const statusMessage = !currentTable
     ? 'Joining table and syncing seats...'
     : allReady
@@ -42,7 +44,7 @@ const TablePage = () => {
             {currentTable?.name ?? 'Loading table'}
           </h1>
           <p className="mt-2 text-xs uppercase tracking-[0.25rem] text-white/50">
-            Code: {tableId ?? '--'} {currentTable?.isPrivate ? '• private' : ''}
+            Code: {tableId ?? '--'} {currentTable?.isPrivate ? '(private)' : ''}
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -52,6 +54,13 @@ const TablePage = () => {
           >
             Back to lobby
           </Link>
+          <button
+            onClick={() => navigate('/game')}
+            disabled={!canStartGame}
+            className="rounded-full border border-amber-300/60 px-4 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.25rem] text-amber-200 transition hover:border-amber-300 hover:text-amber-100 disabled:cursor-not-allowed disabled:border-white/20 disabled:text-white/40"
+          >
+            Start game
+          </button>
           <button
             onClick={() => {
               leaveTable()

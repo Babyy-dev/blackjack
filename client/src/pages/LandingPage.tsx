@@ -24,12 +24,6 @@ const LandingPage = () => {
               Enter the lobby
             </Link>
             <Link
-              to="/game"
-              className="rounded-full border border-amber-300/40 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25rem] text-amber-200 transition hover:border-amber-300 hover:text-amber-100"
-            >
-              Play solo
-            </Link>
-            <Link
               to="/auth"
               className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25rem] text-white transition hover:border-white/40"
             >

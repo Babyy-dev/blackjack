@@ -16,6 +16,8 @@ const AuthPage = () => {
   const [bio, setBio] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const demoAdmin = { email: 'admin@vlackjack.test', password: 'DemoAdmin123!' }
+  const demoPlayer = { email: 'player@vlackjack.test', password: 'DemoPlayer123!' }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -40,6 +42,12 @@ const AuthPage = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const applyDemo = (demo: { email: string; password: string }) => {
+    setMode('login')
+    setEmail(demo.email)
+    setPassword(demo.password)
   }
 
   return (
@@ -151,6 +159,25 @@ const AuthPage = () => {
           <p className="text-xs uppercase tracking-[0.2rem] text-white/50">Demo credentials</p>
           <p className="mt-2">Admin: admin@vlackjack.test / DemoAdmin123!</p>
           <p>Player: player@vlackjack.test / DemoPlayer123!</p>
+          <p className="mt-2 text-[0.6rem] uppercase tracking-[0.18rem] text-white/40">
+            Use these to prefill the form while the backend is offline.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => applyDemo(demoAdmin)}
+              className="rounded-full border border-amber-300/40 px-3 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.22rem] text-amber-200 transition hover:border-amber-300 hover:text-amber-100"
+            >
+              Use admin demo
+            </button>
+            <button
+              type="button"
+              onClick={() => applyDemo(demoPlayer)}
+              className="rounded-full border border-white/20 px-3 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.22rem] text-white/70 transition hover:border-white/40 hover:text-white"
+            >
+              Use player demo
+            </button>
+          </div>
         </div>
       </div>
     </div>

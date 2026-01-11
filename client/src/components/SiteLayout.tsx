@@ -29,14 +29,6 @@ const SiteLayout = () => {
               Lobby
             </NavLink>
             <NavLink
-              to="/game"
-              className={({ isActive }) =>
-                `transition ${isActive ? 'text-amber-300' : 'text-white/70 hover:text-white'}`
-              }
-            >
-              Solo
-            </NavLink>
-            <NavLink
               to="/wallet"
               className={({ isActive }) =>
                 `transition ${isActive ? 'text-amber-300' : 'text-white/70 hover:text-white'}`

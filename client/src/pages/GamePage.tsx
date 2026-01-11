@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import AnimatedBackground from '../game/components/AnimatedBackground'
 import GameHand from '../game/components/GameHand'
 import GameHeader from '../game/components/GameHeader'
@@ -7,16 +8,43 @@ import SvgSprite from '../game/components/SvgSprite'
 import TitleScreen from '../game/components/TitleScreen'
 import { useGameStore } from '../game/store'
 import { initSound, loadSounds, playSound, Sounds } from '../game/sound'
+import { useLobbyStore } from '../store/lobbyStore'
 
 const GamePage = () => {
+  const currentTableId = useLobbyStore((state) => state.currentTableId)
   const players = useGameStore((state) => state.players)
   const isMuted = useGameStore((state) => state.isMuted)
   const setSoundLoadProgress = useGameStore((state) => state.setSoundLoadProgress)
 
   useEffect(() => {
+    if (!currentTableId) return
     void initSound()
     void loadSounds((progress) => setSoundLoadProgress(Math.min(100, Math.round(progress))))
-  }, [setSoundLoadProgress])
+  }, [currentTableId, setSoundLoadProgress])
+
+  if (!currentTableId) {
+    return (
+      <div className="min-h-screen bg-[#02131a] text-white">
+        <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-center gap-6 px-6 text-center">
+          <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/80">
+            Table required
+          </p>
+          <h1 className="text-3xl font-display uppercase tracking-[0.3rem] text-white">
+            Create a table to start
+          </h1>
+          <p className="text-sm text-white/70">
+            Join or create a table in the lobby before entering the blackjack room.
+          </p>
+          <Link
+            to="/lobby"
+            className="rounded-full bg-amber-300 px-6 py-3 text-xs font-semibold uppercase tracking-[0.25rem] text-[#1b1200] shadow-glow transition hover:-translate-y-0.5 hover:bg-amber-200"
+          >
+            Go to lobby
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   const onClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement

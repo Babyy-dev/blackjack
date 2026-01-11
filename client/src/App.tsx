@@ -76,7 +76,14 @@ const App = () => {
           }
         />
       </Route>
-      <Route path="/game" element={<GamePage />} />
+      <Route
+        path="/game"
+        element={
+          <RequireAuth>
+            <GamePage />
+          </RequireAuth>
+        }
+      />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )

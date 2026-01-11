@@ -14,27 +14,29 @@ import blackjackBoom from '@/assets/sounds/636624__cogfirestudios__deep-hit.mp3'
 import gameOver from '@/assets/sounds/636655__cogfirestudios__ui-achievement-puzzle-game-application.mp3'
 import bet from '@/assets/sounds/677860__el_boss__ui-button-click-snap.mp3'
 
-export enum Sounds {
-  Deal,
-  Click,
-  Blackjack,
-  BlackjackBoom,
-  Bust,
-  BadHit,
-  GoodHit,
-  Push,
-  Win,
-  Bet,
-  Lose,
-  Title,
-  ChipDown,
-  ChipUp,
-  Bank,
-  GameOver,
-  DealerBlackjack,
-}
+export const Sounds = {
+  Deal: 'deal',
+  Click: 'click',
+  Blackjack: 'blackjack',
+  BlackjackBoom: 'blackjackBoom',
+  Bust: 'bust',
+  BadHit: 'badHit',
+  GoodHit: 'goodHit',
+  Push: 'push',
+  Win: 'win',
+  Bet: 'bet',
+  Lose: 'lose',
+  Title: 'title',
+  ChipDown: 'chipDown',
+  ChipUp: 'chipUp',
+  Bank: 'bank',
+  GameOver: 'gameOver',
+  DealerBlackjack: 'dealerBlackjack',
+} as const
 
-const files = new Map<Sounds, string>([
+export type SoundId = (typeof Sounds)[keyof typeof Sounds]
+
+const files = new Map<SoundId, string>([
   [Sounds.Deal, deal],
   [Sounds.Click, click],
   [Sounds.Blackjack, blackjack],
@@ -54,8 +56,8 @@ const files = new Map<Sounds, string>([
 
 const SOUND_PERCENT = 100 / files.size
 
-const buffers = new Map<Sounds, AudioBuffer>()
-const sources = new Map<Sounds, AudioBufferSourceNode>()
+const buffers = new Map<SoundId, AudioBuffer>()
+const sources = new Map<SoundId, AudioBufferSourceNode>()
 
 const ctx = new AudioContext()
 const gainNode = ctx.createGain()
@@ -65,7 +67,10 @@ export const initSound = async (): Promise<void> => {
   if (ctx.state === 'suspended') await ctx.resume()
 }
 
-const loadSound = async (sound: Sounds, onProgress?: (value: number) => void): Promise<void> => {
+const loadSound = async (
+  sound: SoundId,
+  onProgress?: (value: number) => void,
+): Promise<void> => {
   const response = await fetch(files.get(sound)!)
   const arrayBuffer = await response.arrayBuffer()
   const audioBuffer = await ctx.decodeAudioData(arrayBuffer)
@@ -82,7 +87,7 @@ export const loadSounds = async (onProgress?: (value: number) => void): Promise<
   return Promise.all(Array.from(files.keys()).map((sound) => loadSound(sound, handler)))
 }
 
-export const stopSound = (sound: Sounds) => {
+export const stopSound = (sound: SoundId) => {
   if (!sources.has(sound)) return
   const source = sources.get(sound)!
   source.stop()
@@ -90,7 +95,7 @@ export const stopSound = (sound: Sounds) => {
 }
 
 export const playSound = async (
-  sound: Sounds,
+  sound: SoundId,
   options: { restartIfPlaying?: boolean; isMuted?: boolean } = {},
 ) => {
   const { restartIfPlaying = true, isMuted = false } = options
@@ -109,7 +114,7 @@ export const playSound = async (
   source.start()
 }
 
-export const setLooping = (sound: Sounds, loop: boolean) => {
+export const setLooping = (sound: SoundId, loop: boolean) => {
   if (!sources.has(sound)) return
   sources.get(sound)!.loop = loop
 }
