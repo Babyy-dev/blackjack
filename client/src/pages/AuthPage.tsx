@@ -51,10 +51,10 @@ const AuthPage = () => {
   }
 
   return (
-    <div className="mx-auto flex w-full  flex-col gap-10 px-6 py-16">
+    <div className="mx-auto flex w-full flex-col gap-8 px-6 py-12 sm:gap-10 sm:py-16">
       <header className="text-center">
         <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/80">Member lounge</p>
-        <h1 className="mt-4 text-5xl font-display uppercase tracking-[0.35rem] text-white">
+        <h1 className="mt-4 text-3xl font-display uppercase tracking-[0.25rem] text-white sm:text-5xl sm:tracking-[0.35rem]">
           {mode === 'login' ? 'Return to the table' : 'Claim your seat'}
         </h1>
         <p className="mt-3 text-sm text-white/60">
@@ -64,12 +64,12 @@ const AuthPage = () => {
         </p>
       </header>
 
-      <div className="mx-auto w-full max-w-xl rounded-3xl border border-white/10 bg-white/5 p-8">
+      <div className="mx-auto w-full max-w-xl rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
         <div className="flex justify-center gap-4">
           <button
             type="button"
             onClick={() => setMode('login')}
-            className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.2rem] transition ${
+            className={`rounded-full px-4 py-2 text-[0.6rem] uppercase tracking-[0.18rem] transition sm:text-xs sm:tracking-[0.2rem] ${
               mode === 'login'
                 ? 'bg-amber-300 text-[#1b1200]'
                 : 'border border-white/20 text-white/70 hover:text-white'
@@ -80,7 +80,7 @@ const AuthPage = () => {
           <button
             type="button"
             onClick={() => setMode('register')}
-            className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.2rem] transition ${
+            className={`rounded-full px-4 py-2 text-[0.6rem] uppercase tracking-[0.18rem] transition sm:text-xs sm:tracking-[0.2rem] ${
               mode === 'register'
                 ? 'bg-amber-300 text-[#1b1200]'
                 : 'border border-white/20 text-white/70 hover:text-white'

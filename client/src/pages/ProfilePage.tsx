@@ -47,8 +47,8 @@ const ProfilePage = () => {
 
   if (!user) {
     return (
-      <div className="mx-auto flex w-full  flex-col items-center gap-4 px-6 py-20 text-center">
-        <h1 className="text-4xl font-display uppercase tracking-[0.3rem] text-white">
+      <div className="mx-auto flex w-full flex-col items-center gap-4 px-6 py-16 text-center sm:py-20">
+        <h1 className="text-3xl font-display uppercase tracking-[0.25rem] text-white sm:text-4xl sm:tracking-[0.3rem]">
           Member vault
         </h1>
         <p className="text-sm text-white/60">Log in to view and edit your casino profile.</p>
@@ -58,8 +58,8 @@ const ProfilePage = () => {
 
   if (profileQuery.isLoading) {
     return (
-      <div className="mx-auto flex w-full  flex-col items-center gap-4 px-6 py-20 text-center">
-        <h1 className="text-4xl font-display uppercase tracking-[0.3rem] text-white">
+      <div className="mx-auto flex w-full flex-col items-center gap-4 px-6 py-16 text-center sm:py-20">
+        <h1 className="text-3xl font-display uppercase tracking-[0.25rem] text-white sm:text-4xl sm:tracking-[0.3rem]">
           Loading profile
         </h1>
         <p className="text-sm text-white/60">Fetching your vault details...</p>
@@ -69,8 +69,8 @@ const ProfilePage = () => {
 
   if (profileQuery.isError) {
     return (
-      <div className="mx-auto flex w-full  flex-col items-center gap-4 px-6 py-20 text-center">
-        <h1 className="text-4xl font-display uppercase tracking-[0.3rem] text-white">
+      <div className="mx-auto flex w-full flex-col items-center gap-4 px-6 py-16 text-center sm:py-20">
+        <h1 className="text-3xl font-display uppercase tracking-[0.25rem] text-white sm:text-4xl sm:tracking-[0.3rem]">
           Vault unavailable
         </h1>
         <p className="text-sm text-white/60">We could not load your profile right now.</p>
@@ -86,10 +86,10 @@ const ProfilePage = () => {
     : null
 
   return (
-    <div className="mx-auto flex w-full  flex-col gap-10 px-6 py-16">
+    <div className="mx-auto flex w-full flex-col gap-10 px-6 py-12 sm:py-16">
       <header>
         <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/80">Vault</p>
-        <h1 className="mt-4 text-4xl font-display uppercase tracking-[0.3rem] text-white">
+        <h1 className="mt-4 break-all text-2xl font-display uppercase tracking-[0.2rem] text-white sm:text-4xl sm:tracking-[0.3rem]">
           {user.email}
         </h1>
         <p className="mt-2 text-sm text-white/60">
@@ -98,9 +98,9 @@ const ProfilePage = () => {
       </header>
 
       <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr]">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
           <div className="flex flex-col items-center gap-4">
-            <div className="h-32 w-32 overflow-hidden rounded-full border border-white/20 bg-[#071219]">
+            <div className="h-28 w-28 overflow-hidden rounded-full border border-white/20 bg-[#071219] sm:h-32 sm:w-32">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="Profile avatar" className="h-full w-full object-cover" />
               ) : (
@@ -128,7 +128,7 @@ const ProfilePage = () => {
         </div>
 
         <form
-          className="rounded-3xl border border-white/10 bg-white/5 p-6 text-sm"
+          className="rounded-3xl border border-white/10 bg-white/5 p-5 text-sm sm:p-6"
           onSubmit={(event) => {
             event.preventDefault()
             setMessage(null)

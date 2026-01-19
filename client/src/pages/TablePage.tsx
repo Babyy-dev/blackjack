@@ -77,14 +77,14 @@ const TablePage = () => {
   }, [isRoundActive, navigate])
 
   return (
-    <div className="mx-auto flex w-full  flex-col gap-8 px-6 py-12">
+    <div className="mx-auto flex w-full flex-col gap-8 px-6 py-10 sm:py-12">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/70">Table</p>
-          <h1 className="text-3xl font-display uppercase tracking-[0.3rem] text-white">
+          <h1 className="text-2xl font-display uppercase tracking-[0.2rem] text-white sm:text-3xl sm:tracking-[0.3rem]">
             {currentTable?.name ?? 'Loading table'}
           </h1>
-          <p className="mt-2 text-xs uppercase tracking-[0.25rem] text-white/50">
+          <p className="mt-2 break-all text-[0.6rem] uppercase tracking-[0.2rem] text-white/50 sm:text-xs sm:tracking-[0.25rem]">
             {codeLabel}: {displayCode} {currentTable?.isPrivate ? '(private)' : ''}
           </p>
         </div>
@@ -117,10 +117,10 @@ const TablePage = () => {
         </div>
       </header>
 
-      <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <section className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
+            <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
               Players
             </h2>
             <p className="mt-2 text-xs uppercase tracking-[0.2rem] text-white/60">
@@ -135,7 +135,7 @@ const TablePage = () => {
             {myPlayer?.isReady ? 'Unready' : 'Ready'}
           </button>
         </div>
-        <div className="mt-6 grid gap-3 md:grid-cols-2">
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
           {players.map((player) => (
             <div
               key={player.userId}
@@ -154,7 +154,7 @@ const TablePage = () => {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-[#08161c] p-6 text-sm text-white/70">
+      <section className="rounded-3xl border border-white/10 bg-[#08161c] p-5 text-sm text-white/70 sm:p-6">
         <p className="text-xs uppercase tracking-[0.2rem] text-white/50">Game status</p>
         <p className="mt-3">{statusMessage}</p>
       </section>

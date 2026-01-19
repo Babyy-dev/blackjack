@@ -81,10 +81,10 @@ const WalletPage = () => {
   const canPurchase = Boolean(ethAddress || solAddress)
 
   return (
-    <div className="mx-auto flex w-full  flex-col gap-8 px-6 py-12">
+    <div className="mx-auto flex w-full flex-col gap-8 px-6 py-10 sm:py-12">
       <header>
         <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/70">Wallet</p>
-        <h1 className="text-3xl font-display uppercase tracking-[0.3rem] text-white">
+        <h1 className="text-2xl font-display uppercase tracking-[0.25rem] text-white sm:text-3xl sm:tracking-[0.3rem]">
           Token vault
         </h1>
         <p className="mt-2 text-sm text-white/60">
@@ -93,16 +93,16 @@ const WalletPage = () => {
       </header>
 
       <section className="grid gap-6 md:grid-cols-3">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
           <p className="text-xs uppercase tracking-[0.2rem] text-white/60">Balance</p>
-          <p className="mt-4 text-3xl font-semibold text-white">
+          <p className="mt-4 text-2xl font-semibold text-white sm:text-3xl">
             {isLoading ? '...' : data?.wallet.balance ?? 0}
           </p>
           <p className="mt-2 text-xs uppercase tracking-[0.2rem] text-amber-200/80">
             {data?.wallet.currency ?? 'TOKEN'}
           </p>
         </div>
-        <div className="rounded-3xl border border-white/10 bg-[#08161c] p-6">
+        <div className="rounded-3xl border border-white/10 bg-[#08161c] p-5 sm:p-6">
           <p className="text-xs uppercase tracking-[0.2rem] text-white/60">Deposit</p>
           <p className="mt-3 text-sm text-white/70">
             Link a wallet to convert crypto to in-game tokens.
@@ -114,7 +114,7 @@ const WalletPage = () => {
             Coming soon
           </button>
         </div>
-        <div className="rounded-3xl border border-white/10 bg-[#08161c] p-6">
+        <div className="rounded-3xl border border-white/10 bg-[#08161c] p-5 sm:p-6">
           <p className="text-xs uppercase tracking-[0.2rem] text-white/60">Withdraw</p>
           <p className="mt-3 text-sm text-white/70">
             Request a payout once withdrawal approvals go live.
@@ -129,7 +129,7 @@ const WalletPage = () => {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
               Wallet connections
@@ -144,7 +144,7 @@ const WalletPage = () => {
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#08161c] px-4 py-3">
               <div>
                 <p className="text-sm font-semibold text-white">MetaMask</p>
-                <p className="text-xs uppercase tracking-[0.2rem] text-white/40">
+                <p className="break-all text-[0.6rem] uppercase tracking-[0.18rem] text-white/40 sm:text-xs sm:tracking-[0.2rem]">
                   {ethAddress ? `Connected: ${ethAddress}` : 'Not connected'}
                 </p>
               </div>
@@ -159,7 +159,7 @@ const WalletPage = () => {
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#08161c] px-4 py-3">
               <div>
                 <p className="text-sm font-semibold text-white">Phantom</p>
-                <p className="text-xs uppercase tracking-[0.2rem] text-white/40">
+                <p className="break-all text-[0.6rem] uppercase tracking-[0.18rem] text-white/40 sm:text-xs sm:tracking-[0.2rem]">
                   {solAddress ? `Connected: ${solAddress}` : 'Not connected'}
                 </p>
               </div>
@@ -174,7 +174,7 @@ const WalletPage = () => {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
           <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
             Diamond shop
           </h2>
@@ -194,7 +194,7 @@ const WalletPage = () => {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <section className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
             Recent activity

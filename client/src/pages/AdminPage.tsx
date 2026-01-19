@@ -86,10 +86,10 @@ const AdminPage = () => {
   ]
 
   return (
-    <div className="mx-auto flex w-full flex-col gap-10 px-6 py-12">
+    <div className="mx-auto flex w-full flex-col gap-10 px-6 py-10 sm:py-12">
       <header>
         <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/70">Admin</p>
-        <h1 className="text-4xl font-display uppercase tracking-[0.3rem] text-white">
+        <h1 className="text-3xl font-display uppercase tracking-[0.25rem] text-white sm:text-4xl sm:tracking-[0.3rem]">
           Control room
         </h1>
         <p className="mt-2 text-sm text-white/60">
@@ -108,7 +108,7 @@ const AdminPage = () => {
       </header>
 
       <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-        <aside className="h-fit rounded-3xl border border-white/10 bg-white/5 p-5 text-xs uppercase tracking-[0.2rem] text-white/60 lg:sticky lg:top-24">
+        <aside className="h-fit rounded-3xl border border-white/10 bg-white/5 p-4 text-xs uppercase tracking-[0.2rem] text-white/60 sm:p-5 lg:sticky lg:top-24">
           <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/70">
             Sections
           </p>
@@ -131,9 +131,9 @@ const AdminPage = () => {
         </aside>
 
         <div className="space-y-10">
-          <section id="overview" className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <section id="overview" className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
+              <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
                 Platform overview
               </h2>
               {overviewQuery.isError && (
@@ -151,20 +151,22 @@ const AdminPage = () => {
               ].map((card) => (
                 <div
                   key={card.label}
-                  className="rounded-2xl border border-white/10 bg-[#08161c] p-5"
+                  className="rounded-2xl border border-white/10 bg-[#08161c] p-4 sm:p-5"
                 >
                   <p className="text-xs uppercase tracking-[0.2rem] text-white/60">
                     {card.label}
                   </p>
-                  <p className="mt-4 text-3xl font-semibold text-white">{card.value}</p>
+                  <p className="mt-4 text-2xl font-semibold text-white sm:text-3xl">
+                    {card.value}
+                  </p>
                 </div>
               ))}
             </div>
           </section>
 
-          <section id="users" className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <section id="users" className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
+              <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
                 User management
               </h2>
               {usersQuery.isLoading && (
@@ -194,7 +196,7 @@ const AdminPage = () => {
                 >
                   <div>
                     <p className="text-sm font-semibold text-white">{user.display_name}</p>
-                    <p className="text-xs uppercase tracking-[0.2rem] text-white/40">
+                    <p className="break-all text-[0.6rem] uppercase tracking-[0.18rem] text-white/40 sm:text-xs sm:tracking-[0.2rem]">
                       {user.email}
                     </p>
                   </div>
@@ -263,8 +265,8 @@ const AdminPage = () => {
             </div>
           </section>
 
-          <section id="live" className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
+          <section id="live" className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+            <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
               Live table monitor
             </h2>
             <p className="mt-2 text-sm text-white/60">
@@ -275,8 +277,8 @@ const AdminPage = () => {
             </div>
           </section>
 
-          <section id="economy" className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
+          <section id="economy" className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+            <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
               Economy control
             </h2>
             <p className="mt-2 text-sm text-white/60">
@@ -301,8 +303,8 @@ const AdminPage = () => {
             </div>
           </section>
 
-          <section id="crypto" className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
+          <section id="crypto" className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+            <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
               Crypto gateway
             </h2>
             <p className="mt-2 text-sm text-white/60">
@@ -323,8 +325,8 @@ const AdminPage = () => {
             </div>
           </section>
 
-          <section id="referrals" className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
+          <section id="referrals" className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+            <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
               Referral oversight
             </h2>
             <p className="mt-2 text-sm text-white/60">
@@ -335,8 +337,8 @@ const AdminPage = () => {
             </div>
           </section>
 
-          <section id="security" className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
+          <section id="security" className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+            <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
               Security and anti-cheat
             </h2>
             <p className="mt-2 text-sm text-white/60">
@@ -361,8 +363,8 @@ const AdminPage = () => {
             </div>
           </section>
 
-          <section id="rng" className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
+          <section id="rng" className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+            <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
               RNG and fairness
             </h2>
             <p className="mt-2 text-sm text-white/60">
@@ -373,8 +375,8 @@ const AdminPage = () => {
             </div>
           </section>
 
-          <section id="system" className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
+          <section id="system" className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+            <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
               System controls
             </h2>
             <p className="mt-2 text-sm text-white/60">
@@ -395,9 +397,9 @@ const AdminPage = () => {
             </div>
           </section>
 
-          <section id="logs" className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <section id="logs" className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
+              <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
                 Logs and audits
               </h2>
               <span className="text-xs uppercase tracking-[0.2rem] text-white/40">

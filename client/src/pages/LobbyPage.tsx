@@ -48,17 +48,17 @@ const LobbyPage = () => {
   }, [error, clearError])
 
   return (
-    <div className="mx-auto flex w-full  flex-col gap-10 px-6 py-14">
+    <div className="mx-auto flex w-full flex-col gap-10 px-6 py-12 sm:py-14">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/70">
             Multiplayer lobby
           </p>
-          <h1 className="text-4xl font-display uppercase tracking-[0.3rem] text-white">
+          <h1 className="text-3xl font-display uppercase tracking-[0.25rem] text-white sm:text-4xl sm:tracking-[0.3rem]">
             Live tables
           </h1>
         </div>
-        <div className="flex items-center gap-3 text-xs uppercase tracking-[0.2rem] text-white/60">
+        <div className="flex items-center gap-3 text-[0.6rem] uppercase tracking-[0.18rem] text-white/60 sm:text-xs sm:tracking-[0.2rem]">
           <span className="h-2 w-2 rounded-full bg-amber-300" />
           <span>{connectionLabel}</span>
         </div>
@@ -71,8 +71,8 @@ const LobbyPage = () => {
       )}
 
       <div className="grid gap-8 lg:grid-cols-[1.05fr_1.2fr]">
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+          <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
             Create a table
           </h2>
           <div className="mt-6 space-y-4 text-sm text-white/70">
@@ -132,7 +132,7 @@ const LobbyPage = () => {
           </div>
 
           <div className="mt-10 border-t border-white/10 pt-6">
-            <h3 className="text-lg font-display uppercase tracking-[0.2rem] text-white">
+            <h3 className="text-base font-display uppercase tracking-[0.2rem] text-white sm:text-lg">
               Join by code
             </h3>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -159,9 +159,9 @@ const LobbyPage = () => {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
+            <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
               Available tables
             </h2>
             {currentTableId && (

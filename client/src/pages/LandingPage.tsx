@@ -2,16 +2,16 @@ import { Link } from 'react-router-dom'
 
 const LandingPage = () => {
   return (
-    <div className="mx-auto flex w-full  flex-col gap-20 px-6 py-16">
+    <div className="mx-auto flex w-full flex-col gap-12 px-6 py-12 sm:gap-20 sm:py-16">
       <section className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="flex flex-col gap-6">
           <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/80">
             Project MACA casino floor
           </p>
-          <h1 className="text-5xl font-display uppercase tracking-[0.35rem] text-white sm:text-6xl">
+          <h1 className="text-3xl font-display uppercase tracking-[0.22rem] text-white sm:text-5xl sm:tracking-[0.35rem] lg:text-6xl">
             Spin up a private blackjack table with real stakes, real pacing, and a cinematic glow.
           </h1>
-          <p className="text-lg text-white/70">
+          <p className="text-base text-white/70 sm:text-lg">
             Vlackjack pairs a fast single-player engine with secure account vaults and a lobby ready
             for real-time multiplayer. Warm up on the practice table, then step into the high-limit
             lounge.
@@ -19,21 +19,21 @@ const LandingPage = () => {
           <div className="flex flex-wrap gap-4">
             <Link
               to="/lobby"
-              className="rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25rem] text-[#1b1200] shadow-glow transition hover:-translate-y-0.5 hover:bg-amber-200"
+              className="rounded-full bg-amber-300 px-6 py-3 text-xs font-semibold uppercase tracking-[0.2rem] text-[#1b1200] shadow-glow transition hover:-translate-y-0.5 hover:bg-amber-200 sm:text-sm sm:tracking-[0.25rem]"
             >
               Enter the lobby
             </Link>
             <Link
               to="/auth"
-              className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25rem] text-white transition hover:border-white/40"
+              className="rounded-full border border-white/20 px-6 py-3 text-xs font-semibold uppercase tracking-[0.2rem] text-white transition hover:border-white/40 sm:text-sm sm:tracking-[0.25rem]"
             >
               Member login
             </Link>
           </div>
         </div>
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d1f28]/80 p-8 shadow-xl">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d1f28]/80 p-6 shadow-xl sm:p-8">
           <div className="absolute -right-10 -top-14 h-40 w-40 rounded-full bg-amber-300/20 blur-2xl" />
-          <h2 className="text-2xl font-display uppercase tracking-[0.25rem] text-white">
+          <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white sm:text-2xl sm:tracking-[0.25rem]">
             Tonight's highlights
           </h2>
           <div className="mt-6 space-y-5 text-sm text-white/70">
@@ -80,10 +80,10 @@ const LandingPage = () => {
         ))}
       </section>
 
-      <section className="grid gap-8 rounded-3xl border border-white/10 bg-[#071a22]/80 p-8 lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="grid gap-8 rounded-3xl border border-white/10 bg-[#071a22]/80 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/70">How it works</p>
-          <h2 className="mt-4 text-3xl font-display uppercase tracking-[0.25rem] text-white">
+          <h2 className="mt-4 text-2xl font-display uppercase tracking-[0.2rem] text-white sm:text-3xl sm:tracking-[0.25rem]">
             From lobby to last hand
           </h2>
           <p className="mt-4 text-sm text-white/70">
@@ -117,9 +117,9 @@ const LandingPage = () => {
         </div>
       </section>
 
-      <section className="grid gap-6 rounded-3xl border border-amber-300/20 bg-gradient-to-br from-[#0b1f26] via-[#13252f] to-[#0b1f26] p-8 text-white/80 md:grid-cols-[1.2fr_0.8fr]">
+      <section className="grid gap-6 rounded-3xl border border-amber-300/20 bg-gradient-to-br from-[#0b1f26] via-[#13252f] to-[#0b1f26] p-6 text-white/80 sm:p-8 md:grid-cols-[1.2fr_0.8fr]">
         <div>
-          <h2 className="text-3xl font-display uppercase tracking-[0.25rem] text-white">
+          <h2 className="text-2xl font-display uppercase tracking-[0.2rem] text-white sm:text-3xl sm:tracking-[0.25rem]">
             Build your legend
           </h2>
           <p className="mt-4 text-sm text-white/70">
