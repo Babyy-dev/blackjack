@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import './App.css'
 import { Route, Routes } from 'react-router-dom'
 import SiteLayout from './components/SiteLayout'
 import RequireAdmin from './components/RequireAdmin'

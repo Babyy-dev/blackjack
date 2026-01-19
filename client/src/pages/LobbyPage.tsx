@@ -146,8 +146,8 @@ const LobbyPage = () => {
                 onClick={() => {
                   const trimmed = joinCode.trim()
                   if (trimmed) {
+                    setPendingNavigation(true)
                     joinTable(trimmed)
-                    navigate(`/table/${trimmed}`)
                   }
                 }}
                 disabled={!isConnected}

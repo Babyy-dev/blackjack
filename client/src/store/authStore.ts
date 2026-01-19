@@ -51,6 +51,7 @@ const demoAdminUser: User = {
   email: demoAdminCredentials.email,
   is_active: true,
   is_admin: true,
+  role: 'admin',
   profile: {
     display_name: 'House Admin',
     bio: 'Casino operations dashboard access.',
@@ -63,6 +64,7 @@ const demoPlayerUser: User = {
   email: demoPlayerCredentials.email,
   is_active: true,
   is_admin: false,
+  role: 'player',
   profile: {
     display_name: 'Lucky Player',
     bio: 'Here for the high-limit lounge.',
@@ -123,6 +125,7 @@ const demoSessionForRegister = (payload: authApi.RegisterPayload): DemoSession =
       email,
       is_active: true,
       is_admin: false,
+      role: 'player',
       profile: {
         display_name: payload.display_name.trim(),
         bio: payload.bio ?? null,
@@ -172,9 +175,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ user: response.user })
       writeDemoSession(null)
     } catch (error) {
-      if (DEMO_MODE && isNetworkError(error)) {
+      if (DEMO_MODE) {
         const demoSession = demoSessionForLogin(payload)
-        if (demoSession) {
+        const isAuthFailure =
+          error instanceof ApiError &&
+          (error.status === 401 || error.status === 403 || error.status === 422)
+        if (demoSession && (isNetworkError(error) || isAuthFailure)) {
           get().setTokens(
             demoSession.tokens.access_token,
             demoSession.tokens.refresh_token,

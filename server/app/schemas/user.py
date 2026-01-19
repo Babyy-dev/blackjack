@@ -12,4 +12,5 @@ class UserPublic(BaseModel):
     email: EmailStr
     is_active: bool
     is_admin: bool
+    role: str
     profile: ProfilePublic | None = None

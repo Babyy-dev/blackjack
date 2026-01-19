@@ -6,19 +6,25 @@ const TitleScreen = () => {
   const resetBank = useGameStore((state) => state.resetBank)
   const isGameOver = useGameStore((state) => state.isGameOver)
   const soundLoadProgress = useGameStore((state) => state.soundLoadProgress)
+  const serverMode = useGameStore((state) => state.serverMode)
+  const status = useGameStore((state) => state.status)
 
   const [showTitleScreen, setShowTitleScreen] = useState(true)
 
   const startGame = () => {
     setShowTitleScreen(false)
-    resetBank()
-    useGameStore.setState({ isGameOver: false })
+    if (!serverMode) {
+      resetBank()
+      useGameStore.setState({ isGameOver: false })
+    }
     window.setTimeout(() => {
       void playRound()
     }, 500)
   }
 
-  const visible = showTitleScreen || isGameOver
+  const isRoundActive =
+    serverMode && status ? !['waiting', 'round_end'].includes(status) : false
+  const visible = serverMode ? !isRoundActive : showTitleScreen || isGameOver
 
   return (
     <section className={`title-screen ${visible ? '' : 'is-hidden'}`}>

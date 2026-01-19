@@ -11,6 +11,8 @@ export type Card = {
 }
 
 export type Player = {
+  userId?: string
+  displayName?: string
   name?: string
   isDealer: boolean
   bank: number
@@ -28,16 +30,21 @@ export type GameState = {
   isMuted: boolean
   isGameOver: boolean
   soundLoadProgress: number
+  status?: string
+  minBet?: number
+  maxBet?: number
+  turnEndsAt?: string | null
 }
 
 export class Hand {
-  id: number
+  id: string
   cards: Card[]
   bet: number
   result?: HandResult
+  status?: string
 
-  constructor(bet = 0) {
-    this.id = new Date().getTime() + Math.random()
+  constructor(bet = 0, id?: string) {
+    this.id = id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     this.cards = []
     this.bet = bet
   }
@@ -68,5 +75,20 @@ export class Hand {
     this.cards = []
     this.bet = 0
     this.result = undefined
+    this.status = undefined
+  }
+
+  static fromPayload(payload: {
+    id: string
+    cards: Card[]
+    bet: number
+    result?: HandResult
+    status?: string
+  }): Hand {
+    const hand = new Hand(payload.bet, payload.id)
+    hand.cards = payload.cards
+    hand.result = payload.result
+    hand.status = payload.status
+    return hand
   }
 }

@@ -9,6 +9,7 @@ export type User = {
   email: string
   is_active: boolean
   is_admin: boolean
+  role: string
   profile: Profile | null
 }
 

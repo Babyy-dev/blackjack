@@ -1,8 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useGameStore } from '../store'
+import { useAuthStore } from '../../store/authStore'
 
 const PlayerBank = () => {
-  const bank = useGameStore((state) => state.players[0].bank)
+  const players = useGameStore((state) => state.players)
+  const userId = useAuthStore((state) => state.user?.id)
+  const bank = useMemo(() => {
+    if (!players.length) return 0
+    const seat =
+      players.find((player) => player.userId === userId && !player.isDealer) ??
+      players.find((player) => !player.isDealer)
+    return seat?.bank ?? 0
+  }, [players, userId])
   const previous = useRef(bank)
   const [isIncreasing, setIsIncreasing] = useState(false)
 

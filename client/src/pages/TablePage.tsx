@@ -1,5 +1,6 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useGameStore } from '../game/store'
 import { useAuthStore } from '../store/authStore'
 import { useLobbyStore } from '../store/lobbyStore'
 
@@ -14,11 +15,20 @@ const TablePage = () => {
     joinTable,
     leaveTable,
     setReady,
+    socket,
   } = useLobbyStore()
+  const bindSocket = useGameStore((state) => state.bindSocket)
+  const gameStatus = useGameStore((state) => state.status)
+  const autoReadyRef = useRef<string | null>(null)
+  const startKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (tableId && isConnected) joinTable(tableId)
   }, [tableId, isConnected, joinTable])
+
+  useEffect(() => {
+    bindSocket(socket ?? null, currentTableId ?? null)
+  }, [bindSocket, socket, currentTableId])
 
   const players = currentTable?.players ?? []
   const myPlayer = useMemo(() => {
@@ -29,11 +39,42 @@ const TablePage = () => {
   const readyCount = players.filter((player) => player.isReady).length
   const allReady = players.length > 0 && readyCount === players.length
   const canStartGame = Boolean(currentTableId && myPlayer && isConnected)
+  const displayCode = currentTable?.inviteCode ?? tableId ?? '--'
+  const codeLabel = currentTable?.isPrivate ? 'Invite code' : 'Table ID'
+  const isRoundActive =
+    gameStatus && !['waiting', 'round_end'].includes(gameStatus)
   const statusMessage = !currentTable
     ? 'Joining table and syncing seats...'
     : allReady
       ? 'All players are ready. Waiting for the dealer to start the round.'
       : 'Waiting for players to ready up before the round begins.'
+
+  useEffect(() => {
+    if (!currentTable || !isConnected || !myPlayer) return
+    if (autoReadyRef.current === currentTable.id) return
+    if (!myPlayer.isReady) {
+      setReady(true)
+    }
+    autoReadyRef.current = currentTable.id
+  }, [currentTable, isConnected, myPlayer, setReady])
+
+  useEffect(() => {
+    if (!currentTable || !isConnected) return
+    if (!allReady) {
+      startKeyRef.current = null
+      return
+    }
+    const status = gameStatus ?? 'waiting'
+    if (!['waiting', 'round_end'].includes(status)) return
+    const startKey = `${currentTable.id}:${status}`
+    if (startKeyRef.current === startKey) return
+    startKeyRef.current = startKey
+    if (socket?.connected) socket.emit('game:start')
+  }, [allReady, currentTable, gameStatus, isConnected, socket])
+
+  useEffect(() => {
+    if (isRoundActive) navigate('/game')
+  }, [isRoundActive, navigate])
 
   return (
     <div className="mx-auto flex w-full  flex-col gap-8 px-6 py-12">
@@ -44,7 +85,7 @@ const TablePage = () => {
             {currentTable?.name ?? 'Loading table'}
           </h1>
           <p className="mt-2 text-xs uppercase tracking-[0.25rem] text-white/50">
-            Code: {tableId ?? '--'} {currentTable?.isPrivate ? '(private)' : ''}
+            {codeLabel}: {displayCode} {currentTable?.isPrivate ? '(private)' : ''}
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -55,7 +96,10 @@ const TablePage = () => {
             Back to lobby
           </Link>
           <button
-            onClick={() => navigate('/game')}
+            onClick={() => {
+              if (socket?.connected) socket.emit('game:start')
+              navigate('/game')
+            }}
             disabled={!canStartGame}
             className="rounded-full border border-amber-300/60 px-4 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.25rem] text-amber-200 transition hover:border-amber-300 hover:text-amber-100 disabled:cursor-not-allowed disabled:border-white/20 disabled:text-white/40"
           >

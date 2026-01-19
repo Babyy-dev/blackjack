@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { apiBaseUrl } from '../api/client'
 import { withAuthRetry } from '../api/authorized'
 import { fetchProfile, updateProfile, uploadAvatar } from '../api/profile'
@@ -8,6 +9,7 @@ import { useAuthStore } from '../store/authStore'
 const ProfilePage = () => {
   const user = useAuthStore((state) => state.user)
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
   const [message, setMessage] = useState<string | null>(null)
@@ -31,6 +33,7 @@ const ProfilePage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] })
       setMessage('Profile updated.')
+      navigate('/lobby')
     },
   })
 
@@ -75,8 +78,11 @@ const ProfilePage = () => {
     )
   }
 
-  const avatarUrl = profileQuery.data?.avatar_url
-    ? `${apiBaseUrl}${profileQuery.data.avatar_url}`
+  const rawAvatarUrl = profileQuery.data?.avatar_url ?? null
+  const avatarUrl = rawAvatarUrl
+    ? rawAvatarUrl.startsWith('data:') || rawAvatarUrl.startsWith('http')
+      ? rawAvatarUrl
+      : `${apiBaseUrl}${rawAvatarUrl}`
     : null
 
   return (

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useGameStore } from '../store'
+import { useAuthStore } from '../../store/authStore'
 import PlayerBank from './PlayerBank'
 
 const PlayerToolbar = () => {
@@ -10,6 +11,9 @@ const PlayerToolbar = () => {
   const split = useGameStore((state) => state.split)
   const endHand = useGameStore((state) => state.endHand)
   const hit = useGameStore((state) => state.hit)
+  const userId = useAuthStore((state) => state.user?.id)
+
+  const isMyTurn = !activePlayer?.userId || activePlayer.userId === userId
 
   const canDoubleDown = useMemo(() => {
     if (isDealing) return false
@@ -31,17 +35,17 @@ const PlayerToolbar = () => {
 
   return (
     <div className="player-toolbar" role="toolbar">
-      <button disabled={!canDoubleDown} onClick={() => void doubleDown()}>
+      <button disabled={!canDoubleDown || !isMyTurn} onClick={() => void doubleDown()}>
         Double<br />Down
       </button>
-      <button disabled={!canSplit} onClick={() => void split()}>
+      <button disabled={!canSplit || !isMyTurn} onClick={() => void split()}>
         Split
       </button>
       <PlayerBank />
-      <button disabled={isDealing} onClick={() => void endHand()}>
+      <button disabled={isDealing || !isMyTurn} onClick={() => void endHand()}>
         Stand
       </button>
-      <button disabled={isDealing} onClick={() => void hit()}>
+      <button disabled={isDealing || !isMyTurn} onClick={() => void hit()}>
         Hit
       </button>
     </div>

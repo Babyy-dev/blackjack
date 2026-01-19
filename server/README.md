@@ -44,8 +44,8 @@ uvicorn app.main:app --reload
 Socket.IO uses the access token from `/api/auth/login` for authentication. Connect with:
 
 - `auth: { token: "<access-token>" }`
-- Events: `lobby:list`, `table:create`, `table:join`, `table:leave`, `table:ready`
-- Server pushes: `lobby:snapshot`, `table:state`, `table:joined`, `table:error`
+- Events: `lobby:list`, `table:create`, `table:join`, `table:leave`, `table:ready`, `game:sync`, `game:start`, `game:action`
+- Server pushes: `lobby:snapshot`, `table:state`, `table:joined`, `table:error`, `game:state`, `game:error`
 
 ## Endpoints
 
@@ -62,6 +62,9 @@ Socket.IO uses the access token from `/api/auth/login` for authentication. Conne
 - `PUT /api/wallet/link`
 - `GET /api/admin/overview`
 - `GET /api/admin/users`
+- `PATCH /api/admin/users/{user_id}`
+- `POST /api/admin/users/{user_id}/sessions/revoke`
+- `POST /api/admin/users/{user_id}/wallet/adjust`
 - `GET /uploads/...`
 
 Admin endpoints require an account with `is_admin=true`.

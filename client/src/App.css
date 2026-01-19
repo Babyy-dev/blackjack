@@ -1,0 +1,49 @@
+:root {
+  --page-max-width: min(1680px, 95vw);
+  --page-gutter: clamp(2rem, 4vw, 4.5rem);
+  --section-gap: clamp(1.5rem, 2.5vw, 3rem);
+}
+
+html {
+  font-size: 21px;
+}
+
+body {
+  line-height: 1.7;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.site-shell {
+  width: 100%;
+  max-width: var(--page-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--page-gutter);
+  padding-right: var(--page-gutter);
+}
+
+.site-main > * {
+  width: 100%;
+  max-width: var(--page-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--page-gutter);
+  padding-right: var(--page-gutter);
+  padding-top: clamp(3rem, 5vw, 5rem);
+  padding-bottom: clamp(3rem, 5vw, 5rem);
+}
+
+.site-main section {
+  margin-top: var(--section-gap);
+  margin-bottom: var(--section-gap);
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 16px;
+  }
+}

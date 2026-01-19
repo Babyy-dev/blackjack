@@ -1,8 +1,10 @@
 import { create } from 'zustand'
-import { generateShoe, shuffle } from './cards'
-import type { GameState, HandResult, Player } from './types'
+import type { Socket } from 'socket.io-client'
+import { CardSuits, generateShoe, shuffle } from './cards'
+import type { Card, GameState, HandResult, Player } from './types'
 import { Hand } from './types'
 import { playSound, Sounds } from './sound'
+import { useAuthStore } from '../store/authStore'
 
 const MINIMUM_BET = 1
 const STARTING_BANK = 20
@@ -14,10 +16,53 @@ const createPlayers = (): Player[] => [
   { isDealer: true, bank: 0, hands: [new Hand()] },
 ]
 
+type ServerHandPayload = {
+  id: string
+  cards: Card[]
+  bet: number
+  result?: HandResult
+  status?: string
+}
+
+type ServerPlayerPayload = {
+  userId: string
+  displayName: string
+  isDealer: boolean
+  bank: number
+  hands: ServerHandPayload[]
+}
+
+type ServerGameState = {
+  tableId: string
+  status: string
+  minBet: number
+  maxBet: number
+  cardsPlayed: number
+  shoeCount: number
+  showDealerHoleCard: boolean
+  activePlayerId: string | null
+  activeHandId: string | null
+  turnEndsAt: string | null
+  players: ServerPlayerPayload[]
+}
+
+const SERVER_SUIT_MAP: Record<string, Card['suit']> = {
+  spades: CardSuits[0],
+  diamonds: CardSuits[1],
+  clubs: CardSuits[2],
+  hearts: CardSuits[3],
+}
+
 type GameStore = GameState & {
+  socket: Socket | null
+  serverMode: boolean
+  serverError: string | null
+  tableId: string | null
   resetBank: () => void
   toggleMuted: () => void
   setSoundLoadProgress: (value: number) => void
+  bindSocket: (socket: Socket | null, tableId: string | null) => void
+  clearServerError: () => void
   playRound: () => Promise<void>
   hit: () => Promise<void>
   split: () => Promise<void>
@@ -29,6 +74,65 @@ const sleep = (ms: number = 900) => new Promise((resolve) => setTimeout(resolve,
 
 export const useGameStore = create<GameStore>((set, get) => {
   const syncPlayers = () => set((state) => ({ players: [...state.players] }))
+  let boundSocket: Socket | null = null
+
+  const applyServerState = (payload: ServerGameState) => {
+    const players = payload.players.map((player) => ({
+      userId: player.userId,
+      displayName: player.displayName,
+      name: player.displayName,
+      isDealer: player.isDealer,
+      bank: player.bank,
+      hands: player.hands.map((hand) =>
+        Hand.fromPayload({
+          ...hand,
+          cards: hand.cards.map((card) => ({
+            ...card,
+            suit: SERVER_SUIT_MAP[card.suit] ?? card.suit,
+          })),
+        }),
+      ),
+    }))
+    const activePlayer =
+      payload.activePlayerId &&
+      players.find((player) => player.userId === payload.activePlayerId)
+    const activeHand =
+      activePlayer &&
+      payload.activeHandId &&
+      activePlayer.hands.find((hand) => hand.id === payload.activeHandId)
+
+    const isDealing = payload.status !== 'player'
+    const selfId = useAuthStore.getState().user?.id
+    const selfSeat =
+      players.find((player) => player.userId === selfId && !player.isDealer) ??
+      players.find((player) => !player.isDealer)
+    const isGameOver = selfSeat ? selfSeat.bank < payload.minBet : false
+
+    set({
+      players,
+      activePlayer: activePlayer ?? null,
+      activeHand: activeHand ?? null,
+      cardsPlayed: payload.cardsPlayed,
+      showDealerHoleCard: payload.showDealerHoleCard,
+      isDealing,
+      status: payload.status,
+      minBet: payload.minBet,
+      maxBet: payload.maxBet,
+      turnEndsAt: payload.turnEndsAt,
+      tableId: payload.tableId,
+      isGameOver,
+    })
+  }
+
+  const handleGameState = (payload: ServerGameState | null) => {
+    if (!payload) return
+    applyServerState(payload)
+  }
+
+  const handleGameError = (payload: { message?: string } | null) => {
+    set({ serverError: payload?.message ?? 'Game error' })
+    window.setTimeout(() => set({ serverError: null }), 4000)
+  }
 
   const getDealer = () => {
     const players = get().players
@@ -60,6 +164,7 @@ export const useGameStore = create<GameStore>((set, get) => {
   }
 
   const checkForGameOver = (): boolean => {
+    if (get().serverMode) return false
     const { players } = get()
     if (players[0].bank < MINIMUM_BET) {
       void playSound(Sounds.GameOver, { isMuted: get().isMuted })
@@ -271,7 +376,12 @@ export const useGameStore = create<GameStore>((set, get) => {
     isGameOver: false,
     isMuted: typeof window !== 'undefined' && localStorage.getItem('isMuted') === 'true',
     soundLoadProgress: 0,
+    socket: null,
+    serverMode: false,
+    serverError: null,
+    tableId: null,
     resetBank: () => {
+      if (get().serverMode) return
       get().players.forEach((player) => {
         if (!player.isDealer) player.bank = STARTING_BANK
       })
@@ -285,7 +395,36 @@ export const useGameStore = create<GameStore>((set, get) => {
       }
     },
     setSoundLoadProgress: (value: number) => set({ soundLoadProgress: value }),
+    bindSocket: (socket, tableId) => {
+      if (boundSocket) {
+        boundSocket.off('game:state', handleGameState)
+        boundSocket.off('game:error', handleGameError)
+        boundSocket.off('disconnect')
+      }
+      boundSocket = socket
+      if (!socket) {
+        set({ socket: null, serverMode: false, tableId: null })
+        return
+      }
+      set({ socket, serverMode: true, tableId, serverError: null })
+      socket.on('game:state', handleGameState)
+      socket.on('game:error', handleGameError)
+      socket.on('disconnect', () => {
+        set({ serverError: 'Disconnected from game server.' })
+      })
+      if (socket.connected) {
+        socket.emit('game:sync')
+      } else {
+        socket.once('connect', () => socket.emit('game:sync'))
+      }
+    },
+    clearServerError: () => set({ serverError: null }),
     playRound: async () => {
+      if (get().serverMode) {
+        const socket = get().socket
+        if (socket?.connected) socket.emit('game:start')
+        return
+      }
       if (checkForGameOver()) return
       get().players.forEach((player) => {
         player.hands = [new Hand()]
@@ -298,6 +437,11 @@ export const useGameStore = create<GameStore>((set, get) => {
       playTurn(get().players[0])
     },
     hit: async () => {
+      if (get().serverMode) {
+        const socket = get().socket
+        if (socket?.connected) socket.emit('game:action', { action: 'hit' })
+        return
+      }
       set({ isDealing: true })
       const activeHand = get().activeHand
       if (!activeHand) return
@@ -312,6 +456,11 @@ export const useGameStore = create<GameStore>((set, get) => {
       if (!get().activePlayer?.isDealer) set({ isDealing: false })
     },
     split: async () => {
+      if (get().serverMode) {
+        const socket = get().socket
+        if (socket?.connected) socket.emit('game:action', { action: 'split' })
+        return
+      }
       const { activeHand, activePlayer } = get()
       if (!activeHand || !activePlayer) return
       if (get().isDealing) return
@@ -333,6 +482,11 @@ export const useGameStore = create<GameStore>((set, get) => {
       playTurn(activePlayer)
     },
     doubleDown: async () => {
+      if (get().serverMode) {
+        const socket = get().socket
+        if (socket?.connected) socket.emit('game:action', { action: 'double' })
+        return
+      }
       const { activeHand, activePlayer } = get()
       if (!activeHand || !activePlayer) return
       if (get().isDealing) return
@@ -345,6 +499,11 @@ export const useGameStore = create<GameStore>((set, get) => {
       void get().endHand()
     },
     endHand: async () => {
+      if (get().serverMode) {
+        const socket = get().socket
+        if (socket?.connected) socket.emit('game:action', { action: 'stand' })
+        return
+      }
       const { activePlayer } = get()
       const isSplit = activePlayer && activePlayer.hands.length > 1
       if (isSplit && activePlayer?.hands[1].cards.length === 1) {

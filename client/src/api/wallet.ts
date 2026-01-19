@@ -1,5 +1,31 @@
 import { request } from './client'
 import { withAuthRetry } from './authorized'
+import { useAuthStore } from '../store/authStore'
+
+const DEMO_WALLET_KEY = 'vlackjack.demo.wallet'
+const DEMO_MODE =
+  import.meta.env.VITE_DEMO_MODE === 'true' ||
+  import.meta.env.VITE_DEMO_MODE === '1' ||
+  import.meta.env.DEV
+
+const isDemoAccessToken = (token: string | null) =>
+  typeof token === 'string' && token.startsWith('demo-access:')
+
+const readJson = <T>(key: string): T | null => {
+  if (typeof window === 'undefined') return null
+  const raw = window.localStorage.getItem(key)
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
+const writeJson = (key: string, value: unknown) => {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(key, JSON.stringify(value))
+}
 
 export type WalletSummary = {
   balance: number
@@ -27,18 +53,95 @@ export type WalletLinkPayload = {
   sol_address?: string | null
 }
 
-export const getWallet = () =>
-  withAuthRetry((accessToken) =>
+const buildDefaultWallet = (): WalletResponse => {
+  const now = new Date().toISOString()
+  return {
+    wallet: {
+      balance: 25000,
+      currency: 'TOKEN',
+      eth_address: null,
+      sol_address: null,
+      updated_at: now,
+    },
+    transactions: [
+      {
+        id: 'demo-tx-1',
+        amount: 5000,
+        kind: 'Deposit',
+        status: 'completed',
+        created_at: now,
+      },
+      {
+        id: 'demo-tx-2',
+        amount: -1200,
+        kind: 'Wager',
+        status: 'completed',
+        created_at: now,
+      },
+      {
+        id: 'demo-tx-3',
+        amount: 2100,
+        kind: 'Win',
+        status: 'completed',
+        created_at: now,
+      },
+    ],
+  }
+}
+
+const getDemoWallet = (): WalletResponse => {
+  if (!DEMO_MODE) return buildDefaultWallet()
+  const stored = readJson<WalletResponse>(DEMO_WALLET_KEY)
+  if (stored) return stored
+  const wallet = buildDefaultWallet()
+  writeJson(DEMO_WALLET_KEY, wallet)
+  return wallet
+}
+
+const saveDemoWallet = (wallet: WalletResponse) => {
+  writeJson(DEMO_WALLET_KEY, wallet)
+  return wallet
+}
+
+export const getWallet = async () => {
+  const token = useAuthStore.getState().accessToken
+  if (DEMO_MODE && isDemoAccessToken(token)) {
+    return getDemoWallet()
+  }
+  return withAuthRetry((accessToken) =>
     request<WalletResponse>('/api/wallet', {
       accessToken,
     }),
   )
+}
 
-export const linkWallet = (payload: WalletLinkPayload) =>
-  withAuthRetry((accessToken) =>
+export const linkWallet = async (payload: WalletLinkPayload) => {
+  const token = useAuthStore.getState().accessToken
+  if (DEMO_MODE && isDemoAccessToken(token)) {
+    const current = getDemoWallet()
+    const updated: WalletResponse = {
+      ...current,
+      wallet: {
+        ...current.wallet,
+        eth_address:
+          payload.eth_address === undefined
+            ? current.wallet.eth_address
+            : payload.eth_address,
+        sol_address:
+          payload.sol_address === undefined
+            ? current.wallet.sol_address
+            : payload.sol_address,
+        updated_at: new Date().toISOString(),
+      },
+    }
+    saveDemoWallet(updated)
+    return updated.wallet
+  }
+  return withAuthRetry((accessToken) =>
     request<WalletSummary>('/api/wallet/link', {
       method: 'PUT',
       accessToken,
       body: JSON.stringify(payload),
     }),
   )
+}

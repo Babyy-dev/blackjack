@@ -12,15 +12,22 @@ import { useLobbyStore } from '../store/lobbyStore'
 
 const GamePage = () => {
   const currentTableId = useLobbyStore((state) => state.currentTableId)
+  const socket = useLobbyStore((state) => state.socket)
   const players = useGameStore((state) => state.players)
   const isMuted = useGameStore((state) => state.isMuted)
   const setSoundLoadProgress = useGameStore((state) => state.setSoundLoadProgress)
+  const bindSocket = useGameStore((state) => state.bindSocket)
+  const serverError = useGameStore((state) => state.serverError)
 
   useEffect(() => {
     if (!currentTableId) return
     void initSound()
     void loadSounds((progress) => setSoundLoadProgress(Math.min(100, Math.round(progress))))
   }, [currentTableId, setSoundLoadProgress])
+
+  useEffect(() => {
+    bindSocket(socket ?? null, currentTableId ?? null)
+  }, [bindSocket, socket, currentTableId])
 
   if (!currentTableId) {
     return (
@@ -59,6 +66,11 @@ const GamePage = () => {
       <SvgSprite />
       <AnimatedBackground />
       <GameHeader />
+      {serverError && (
+        <div className="mx-auto mt-6 w-full max-w-4xl rounded-full border border-red-400/40 bg-red-500/10 px-4 py-2 text-center text-xs uppercase tracking-[0.2rem] text-red-100">
+          {serverError}
+        </div>
+      )}
       <main className="game-main" onClickCapture={onClickCapture}>
         {players.map((player, index) => (
           <section
