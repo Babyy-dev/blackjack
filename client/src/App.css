@@ -4,12 +4,19 @@
   --section-gap: clamp(1.5rem, 2.5vw, 3rem);
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html {
   font-size: 21px;
 }
 
 body {
   line-height: 1.7;
+  overflow-x: hidden;
 }
 
 #root {
@@ -43,7 +50,21 @@ body {
 }
 
 @media (max-width: 640px) {
+  :root {
+    --page-max-width: 100%;
+    --page-gutter: clamp(1rem, 4vw, 1.75rem);
+    --section-gap: clamp(1.25rem, 3vw, 2rem);
+  }
+
   html {
     font-size: 16px;
   }
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  max-width: 100%;
 }

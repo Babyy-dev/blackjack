@@ -973,3 +973,124 @@ progress::-moz-progress-bar {
   }
 }
 
+@media (max-width: 768px) {
+  .game-main {
+    gap: 2.5rem;
+    padding: 4.5rem 0.75rem 1.5rem;
+  }
+
+  .player-row {
+    gap: 2.5rem;
+    min-height: auto;
+  }
+
+  .hand {
+    max-width: 90vw;
+    min-width: 0;
+  }
+
+  .active-hand {
+    scale: 1.1;
+  }
+
+  .game button {
+    font-size: 1.2rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: 1.1rem;
+  }
+
+  .player-toolbar {
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .player-toolbar .bank {
+    grid-column: 1 / -1;
+    order: 4;
+  }
+
+  .player-toolbar button:first-of-type {
+    font-size: 1rem;
+  }
+
+  .bank {
+    height: 3rem;
+    font-size: 1.6rem;
+    padding: 0.5rem;
+    border-radius: 1.25rem;
+  }
+
+  .times {
+    font-size: 1.4rem;
+  }
+
+  .card {
+    width: 5rem;
+    height: 7rem;
+  }
+
+  .hand-total {
+    top: -1rem;
+    right: -1rem;
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+    line-height: 2rem;
+  }
+
+  .hand-bet {
+    bottom: -2.5rem;
+  }
+
+  .chip {
+    height: 1.5rem;
+  }
+
+  .title-screen {
+    gap: 2rem;
+    padding: 1.5rem;
+  }
+
+  .title-screen h1 {
+    font-size: 3.2rem;
+    letter-spacing: 0.15rem;
+  }
+
+  .title-screen p {
+    font-size: 1.4rem;
+    letter-spacing: 0.05rem;
+  }
+
+  .title-screen button {
+    font-size: 1.4rem;
+    padding: 1rem 1.75rem;
+  }
+
+  progress {
+    width: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-main {
+    gap: 2rem;
+  }
+
+  .player-row {
+    gap: 2rem;
+  }
+
+  .card {
+    width: 4.5rem;
+    height: 6.4rem;
+  }
+
+  .title-screen h1 {
+    font-size: 2.6rem;
+  }
+
+  .title-screen p {
+    font-size: 1.1rem;
+  }
+}
+

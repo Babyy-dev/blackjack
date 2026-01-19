@@ -93,13 +93,13 @@ export const useGameStore = create<GameStore>((set, get) => {
         }),
       ),
     }))
-    const activePlayer =
-      payload.activePlayerId &&
-      players.find((player) => player.userId === payload.activePlayerId)
+    const activePlayer = payload.activePlayerId
+      ? players.find((player) => player.userId === payload.activePlayerId) ?? null
+      : null
     const activeHand =
-      activePlayer &&
-      payload.activeHandId &&
-      activePlayer.hands.find((hand) => hand.id === payload.activeHandId)
+      activePlayer && payload.activeHandId
+        ? activePlayer.hands.find((hand) => hand.id === payload.activeHandId) ?? null
+        : null
 
     const isDealing = payload.status !== 'player'
     const selfId = useAuthStore.getState().user?.id
