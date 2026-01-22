@@ -6,7 +6,7 @@ const GameHeader = () => {
 
   return (
     <header className="game-header">
-      <h1>Vl<span>a</span>ck<span>j</span>ack</h1>
+      <h1>MACAJACK</h1>
       <button onClick={toggleMuted} aria-label="Toggle sound">
         {!isMuted ? (
           <svg

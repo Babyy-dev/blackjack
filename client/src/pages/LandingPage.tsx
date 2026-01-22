@@ -12,7 +12,7 @@ const LandingPage = () => {
             Spin up a private blackjack table with real stakes, real pacing, and a cinematic glow.
           </h1>
           <p className="text-base text-white/70 sm:text-lg">
-            Vlackjack pairs a fast single-player engine with secure account vaults and a lobby ready
+            MACAJACK pairs a fast single-player engine with secure account vaults and a lobby ready
             for real-time multiplayer. Warm up on the practice table, then step into the high-limit
             lounge.
           </p>
@@ -65,7 +65,7 @@ const LandingPage = () => {
           },
           {
             title: 'Casino ambience',
-            copy: 'Purpose-built visuals, custom cards, and the Vlackjack soundscape.',
+            copy: 'Purpose-built visuals, custom cards, and the MACAJACK soundscape.',
           },
         ].map((item) => (
           <div

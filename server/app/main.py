@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -5,10 +6,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import socketio
+from sqlalchemy import select
 
 from app.api.routes import admin, auth, health, profile, wallet, webhooks
 from app.core.config import settings
+from app.core.security import hash_password
+from app.db.models import Profile, User, Wallet
+from app.db.session import SessionLocal
 from app.realtime.server import sio
+
+logger = logging.getLogger(__name__)
 
 fastapi_app = FastAPI(title=settings.app_name)
 
@@ -31,6 +38,59 @@ fastapi_app.include_router(webhooks.router, tags=["webhooks"])
 @fastapi_app.on_event("startup")
 def ensure_upload_paths() -> None:
     settings.avatar_upload_path.mkdir(parents=True, exist_ok=True)
+    ensure_default_admin()
+
+
+def ensure_default_admin() -> None:
+    if not settings.default_admin_email or not settings.default_admin_password:
+        return
+
+    email = settings.default_admin_email.strip().lower()
+    if not email:
+        return
+
+    db = SessionLocal()
+    try:
+        existing = db.scalar(select(User).where(User.email == email))
+        if existing:
+            updated = False
+            if not existing.is_admin:
+                existing.is_admin = True
+                updated = True
+            if not existing.profile:
+                display_name = settings.default_admin_display_name.strip() or "Admin"
+                existing.profile = Profile(
+                    display_name=display_name,
+                    bio="Administrator account.",
+                )
+                updated = True
+            if not existing.wallet and settings.default_admin_balance >= 0:
+                existing.wallet = Wallet(
+                    balance=settings.default_admin_balance,
+                    currency="TOKEN",
+                )
+                updated = True
+            if updated:
+                db.commit()
+            return
+
+        display_name = settings.default_admin_display_name.strip() or "Admin"
+        user = User(
+            email=email,
+            password_hash=hash_password(settings.default_admin_password),
+            is_active=True,
+            is_admin=True,
+        )
+        user.profile = Profile(display_name=display_name, bio="Administrator account.")
+        if settings.default_admin_balance >= 0:
+            user.wallet = Wallet(balance=settings.default_admin_balance, currency="TOKEN")
+        db.add(user)
+        db.commit()
+        logger.info("Default admin created for %s", email)
+    except Exception:
+        logger.exception("Failed to ensure default admin")
+    finally:
+        db.close()
 
 
 fastapi_app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads")

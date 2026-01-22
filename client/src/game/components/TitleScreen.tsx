@@ -32,10 +32,7 @@ const TitleScreen = () => {
         <use href="#flourish" />
       </svg>
       <div>
-        <h1>
-          Vl<span>a</span>ck<span>j</span>ack
-        </h1>
-        <p>Blackjack Simulator</p>
+        <h1>MACAJACK</h1>
       </div>
       {soundLoadProgress < 100 ? (
         <div className="progress-container">

@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import TableChat from '../components/TableChat'
 import AnimatedBackground from '../game/components/AnimatedBackground'
 import GameHand from '../game/components/GameHand'
@@ -19,18 +19,27 @@ const GamePage = () => {
   const setSoundLoadProgress = useGameStore((state) => state.setSoundLoadProgress)
   const bindSocket = useGameStore((state) => state.bindSocket)
   const serverError = useGameStore((state) => state.serverError)
+  const location = useLocation()
+  const isSolo = useMemo(() => {
+    const params = new URLSearchParams(location.search)
+    return params.get('mode') === 'solo'
+  }, [location.search])
 
   useEffect(() => {
-    if (!currentTableId) return
+    if (!currentTableId && !isSolo) return
     void initSound()
     void loadSounds((progress) => setSoundLoadProgress(Math.min(100, Math.round(progress))))
-  }, [currentTableId, setSoundLoadProgress])
+  }, [currentTableId, isSolo, setSoundLoadProgress])
 
   useEffect(() => {
+    if (isSolo) {
+      bindSocket(null, null)
+      return
+    }
     bindSocket(socket ?? null, currentTableId ?? null)
-  }, [bindSocket, socket, currentTableId])
+  }, [bindSocket, socket, currentTableId, isSolo])
 
-  if (!currentTableId) {
+  if (!currentTableId && !isSolo) {
     return (
       <div className="min-h-screen bg-[#02131a] text-white">
         <div className="mx-auto flex min-h-screen w-full  flex-col items-center justify-center gap-6 px-6 text-center">
@@ -73,19 +82,22 @@ const GamePage = () => {
         </div>
       )}
       <main className="game-main" onClickCapture={onClickCapture}>
-        {players.map((player, index) => (
+        {players.map((player, index) => {
+          const playerKey = player.userId ?? (player.isDealer ? 'dealer' : `player-${index}`)
+          return (
           <section
             className={`player-row ${player.isDealer ? 'dealer' : ''}`}
-            key={`${player.isDealer ? 'dealer' : 'player'}-${index}`}
+            key={playerKey}
           >
             {player.hands.map((hand) => (
               <GameHand key={hand.id} hand={hand} player={player} />
             ))}
           </section>
-        ))}
+          )
+        })}
         <PlayerToolbar />
       </main>
-      <TableChat variant="game" />
+      {!isSolo && <TableChat variant="game" />}
       <TitleScreen />
     </div>
   )

@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     sol_usd_rate: float = 100.0
     crypto_min_withdrawal: int = 10
     crypto_max_withdrawal: int = 100000
+    default_admin_email: str | None = None
+    default_admin_password: str | None = None
+    default_admin_display_name: str = "Admin"
+    default_admin_balance: int = 0
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

@@ -17,7 +17,7 @@ const SiteLayout = () => {
             to="/"
             className="text-xl font-display uppercase tracking-[0.25rem] text-white sm:text-2xl sm:tracking-[0.3rem]"
           >
-            Vl<span className="text-red-400">a</span>ck<span className="text-red-400">j</span>ack
+            MACAJACK
           </NavLink>
           <nav className="flex w-full flex-wrap items-center gap-3 text-[0.65rem] uppercase tracking-[0.18rem] sm:w-auto sm:gap-4 sm:text-sm sm:tracking-[0.2rem]">
             <NavLink
@@ -79,7 +79,7 @@ const SiteLayout = () => {
 
       <footer className="relative z-10 border-t border-white/10">
         <div className="site-shell flex flex-col gap-2 px-6 py-6 text-[0.6rem] uppercase tracking-[0.2rem] text-white/50 md:flex-row md:items-center md:justify-between md:text-xs">
-          <span>Vlackjack Casino</span>
+          <span>MACAJACK Casino</span>
           <span>Play responsibly. 21+ only.</span>
         </div>
       </footer>

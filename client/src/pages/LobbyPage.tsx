@@ -17,14 +17,22 @@ const LobbyPage = () => {
   } = useLobbyStore()
 
   const [name, setName] = useState('')
-  const [maxPlayers, setMaxPlayers] = useState(6)
+  const [mode, setMode] = useState<'single' | 'multi'>('multi')
+  const [maxPlayers, setMaxPlayers] = useState<number | ''>(6)
   const [isPrivate, setIsPrivate] = useState(false)
-  const [minBet, setMinBet] = useState(10)
-  const [maxBet, setMaxBet] = useState(500)
-  const [decks, setDecks] = useState(6)
-  const [startingBank, setStartingBank] = useState(2500)
+  const [minBet, setMinBet] = useState<number | ''>(10)
+  const [maxBet, setMaxBet] = useState<number | ''>(500)
+  const [decks, setDecks] = useState<number | ''>(6)
+  const [startingBank, setStartingBank] = useState<number | ''>(2500)
   const [joinCode, setJoinCode] = useState('')
   const [pendingNavigation, setPendingNavigation] = useState(false)
+
+  const isMultiplayer = mode === 'multi'
+
+  const parseNumber = (value: number | '', fallback: number) => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+    return fallback
+  }
 
   const connectionLabel = useMemo(() => {
     if (isConnected) return 'Connected'
@@ -91,6 +99,34 @@ const LobbyPage = () => {
                 className="mt-2 w-full rounded-xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/60"
               />
             </label>
+            <div>
+              <p className="text-xs uppercase tracking-[0.2rem] text-white/60">Play mode</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setMode('single')}
+                  className={`rounded-full border px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-[0.25rem] transition ${
+                    !isMultiplayer
+                      ? 'border-amber-300/60 bg-amber-300 text-[#1b1200]'
+                      : 'border-white/20 text-white/70 hover:border-amber-300/50 hover:text-amber-200'
+                  }`}
+                >
+                  Single player
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode('multi')}
+                  className={`rounded-full border px-4 py-3 text-[0.65rem] font-semibold uppercase tracking-[0.25rem] transition ${
+                    isMultiplayer
+                      ? 'border-amber-300/60 bg-amber-300 text-[#1b1200]'
+                      : 'border-white/20 text-white/70 hover:border-amber-300/50 hover:text-amber-200'
+                  }`}
+                >
+                  Multiplayer
+                </button>
+              </div>
+            </div>
+            {isMultiplayer && (
             <label className="block">
               <span className="text-xs uppercase tracking-[0.2rem] text-white/60">
                 Max players (2-8)
@@ -101,21 +137,29 @@ const LobbyPage = () => {
                 max={8}
                 value={maxPlayers}
                 onChange={(event) => {
-                  const value = Number(event.target.value)
-                  setMaxPlayers(Number.isNaN(value) ? 2 : value)
+                  const raw = event.target.value
+                  if (raw === '') {
+                    setMaxPlayers('')
+                    return
+                  }
+                  const value = Number(raw)
+                  if (!Number.isNaN(value)) setMaxPlayers(value)
                 }}
                 className="mt-2 w-full rounded-xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/60"
               />
             </label>
-            <label className="flex items-center gap-3 text-xs uppercase tracking-[0.2rem] text-white/60">
-              <input
-                type="checkbox"
-                checked={isPrivate}
-                onChange={(event) => setIsPrivate(event.target.checked)}
-                className="h-4 w-4 rounded border-white/40 bg-transparent text-amber-300"
-              />
-              Private table (invite code)
-            </label>
+            )}
+            {isMultiplayer && (
+              <label className="flex items-center gap-3 text-xs uppercase tracking-[0.2rem] text-white/60">
+                <input
+                  type="checkbox"
+                  checked={isPrivate}
+                  onChange={(event) => setIsPrivate(event.target.checked)}
+                  className="h-4 w-4 rounded border-white/40 bg-transparent text-amber-300"
+                />
+                Private table (invite code)
+              </label>
+            )}
             <div>
               <p className="text-xs uppercase tracking-[0.2rem] text-white/60">Table rules</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -129,8 +173,13 @@ const LobbyPage = () => {
                     max={1000}
                     value={minBet}
                     onChange={(event) => {
-                      const value = Number(event.target.value)
-                      setMinBet(Number.isNaN(value) ? 10 : value)
+                      const raw = event.target.value
+                      if (raw === '') {
+                        setMinBet('')
+                        return
+                      }
+                      const value = Number(raw)
+                      if (!Number.isNaN(value)) setMinBet(value)
                     }}
                     className="mt-2 w-full rounded-xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/60"
                   />
@@ -145,8 +194,13 @@ const LobbyPage = () => {
                     max={10000}
                     value={maxBet}
                     onChange={(event) => {
-                      const value = Number(event.target.value)
-                      setMaxBet(Number.isNaN(value) ? 500 : value)
+                      const raw = event.target.value
+                      if (raw === '') {
+                        setMaxBet('')
+                        return
+                      }
+                      const value = Number(raw)
+                      if (!Number.isNaN(value)) setMaxBet(value)
                     }}
                     className="mt-2 w-full rounded-xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/60"
                   />
@@ -161,8 +215,13 @@ const LobbyPage = () => {
                     max={8}
                     value={decks}
                     onChange={(event) => {
-                      const value = Number(event.target.value)
-                      setDecks(Number.isNaN(value) ? 6 : value)
+                      const raw = event.target.value
+                      if (raw === '') {
+                        setDecks('')
+                        return
+                      }
+                      const value = Number(raw)
+                      if (!Number.isNaN(value)) setDecks(value)
                     }}
                     className="mt-2 w-full rounded-xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/60"
                   />
@@ -177,50 +236,67 @@ const LobbyPage = () => {
                     max={100000}
                     value={startingBank}
                     onChange={(event) => {
-                      const value = Number(event.target.value)
-                      setStartingBank(Number.isNaN(value) ? 2500 : value)
+                      const raw = event.target.value
+                      if (raw === '') {
+                        setStartingBank('')
+                        return
+                      }
+                      const value = Number(raw)
+                      if (!Number.isNaN(value)) setStartingBank(value)
                     }}
                     className="mt-2 w-full rounded-xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/60"
                   />
                 </label>
               </div>
             </div>
-            <button
-              onClick={() => {
-                const normalizedMax = Number.isFinite(maxPlayers)
-                  ? Math.min(Math.max(maxPlayers, 2), 8)
-                  : 6
-                const normalizedMinBet = Number.isFinite(minBet)
-                  ? Math.min(Math.max(minBet, 1), 1000)
-                  : 10
-                const normalizedMaxBet = Number.isFinite(maxBet)
-                  ? Math.min(Math.max(maxBet, normalizedMinBet), 10000)
-                  : Math.max(normalizedMinBet, 500)
-                const normalizedDecks = Number.isFinite(decks)
-                  ? Math.min(Math.max(decks, 1), 8)
-                  : 6
-                let normalizedBank = Number.isFinite(startingBank)
-                  ? Math.min(Math.max(startingBank, 100), 100000)
-                  : 2500
-                if (normalizedBank < normalizedMinBet) {
-                  normalizedBank = normalizedMinBet
-                }
-                setPendingNavigation(true)
-                createTable({
-                  name: name.trim(),
-                  maxPlayers: normalizedMax,
-                  isPrivate,
-                  minBet: normalizedMinBet,
-                  maxBet: normalizedMaxBet,
-                  decks: normalizedDecks,
-                  startingBank: normalizedBank,
-                })
-              }}
-              className="w-full rounded-full bg-amber-300 px-6 py-3 text-xs font-semibold uppercase tracking-[0.25rem] text-[#1b1200] transition hover:-translate-y-0.5 hover:bg-amber-200 disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/40 disabled:hover:translate-y-0"
-              disabled={!isConnected}
-            >
-              Open table
-            </button>
+            {isMultiplayer ? (
+              <button
+                onClick={() => {
+                  const normalizedMax = Math.min(
+                    Math.max(parseNumber(maxPlayers, 6), 2),
+                    8,
+                  )
+                  const normalizedMinBet = Math.min(
+                    Math.max(parseNumber(minBet, 10), 1),
+                    1000,
+                  )
+                  const normalizedMaxBet = Math.min(
+                    Math.max(parseNumber(maxBet, 500), normalizedMinBet),
+                    10000,
+                  )
+                  const normalizedDecks = Math.min(Math.max(parseNumber(decks, 6), 1), 8)
+                  let normalizedBank = Math.min(
+                    Math.max(parseNumber(startingBank, 2500), 100),
+                    100000,
+                  )
+                  if (normalizedBank < normalizedMinBet) {
+                    normalizedBank = normalizedMinBet
+                  }
+                  setPendingNavigation(true)
+                  createTable({
+                    name: name.trim(),
+                    maxPlayers: normalizedMax,
+                    isPrivate,
+                    minBet: normalizedMinBet,
+                    maxBet: normalizedMaxBet,
+                    decks: normalizedDecks,
+                    startingBank: normalizedBank,
+                  })
+                }}
+                className="w-full rounded-full bg-amber-300 px-6 py-3 text-xs font-semibold uppercase tracking-[0.25rem] text-[#1b1200] transition hover:-translate-y-0.5 hover:bg-amber-200 disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/40 disabled:hover:translate-y-0"
+                disabled={!isConnected}
+              >
+                Open table
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => navigate('/game?mode=solo')}
+                className="w-full rounded-full bg-amber-300 px-6 py-3 text-xs font-semibold uppercase tracking-[0.25rem] text-[#1b1200] transition hover:-translate-y-0.5 hover:bg-amber-200"
+              >
+                Start single player
+              </button>
+            )}
           </div>
 
           <div className="mt-10 border-t border-white/10 pt-6">
