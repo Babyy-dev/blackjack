@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta, timezone
+import uuid
 
 import socketio
 
@@ -10,12 +11,16 @@ from app.realtime.auth import get_socket_user
 from app.realtime.game_logging import record_action, record_round_end, record_round_start
 from app.realtime.state import (
     MAX_TABLE_PLAYERS,
+    ChatMessage,
     LobbyState,
+    TableConfig,
     TableError,
 )
 
 LOBBY_ROOM = "lobby"
 TURN_TIMEOUT_SECONDS = 25
+CHAT_MESSAGE_LIMIT = 280
+CHAT_RATE_LIMIT_SECONDS = 0.5
 
 sio = socketio.AsyncServer(
     async_mode="asgi",
@@ -25,6 +30,40 @@ sio = socketio.AsyncServer(
 
 state = LobbyState()
 state_lock = asyncio.Lock()
+
+
+def _parse_int(value: object, default: int, min_value: int, max_value: int) -> int:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return min(max(parsed, min_value), max_value)
+
+
+async def emit_chat_history(sid: str, table_id: str) -> None:
+    async with state_lock:
+        messages = state.get_chat_history(table_id)
+    await sio.emit("chat:history", {"tableId": table_id, "messages": messages}, room=sid)
+
+
+async def broadcast_chat_message(table_id: str, message: ChatMessage) -> None:
+    async with state_lock:
+        payload = state.add_chat_message(table_id, message)
+    if payload:
+        await sio.emit("chat:message", payload, room=table_room(table_id))
+
+
+async def broadcast_system_message(table_id: str, message: str) -> None:
+    system_message = ChatMessage(
+        message_id=uuid.uuid4().hex,
+        table_id=table_id,
+        user_id=None,
+        display_name="System",
+        message=message,
+        created_at=datetime.now(timezone.utc),
+        system=True,
+    )
+    await broadcast_chat_message(table_id, system_message)
 
 
 async def emit_game_state(table_id: str) -> None:
@@ -72,6 +111,8 @@ async def schedule_turn_timeout(table_id: str, token: int | None) -> None:
         table = state.tables.get(table_id)
         if not table or not table.game:
             return
+        if table.is_paused:
+            return
         game = table.game
         if game.turn_token != token or not game.active_player_id:
             return
@@ -103,7 +144,7 @@ async def connect(sid: str, environ: dict, auth: dict | None) -> bool:
         return False
 
     async with state_lock:
-        player = state.register_player(sid, user.user_id, user.display_name)
+        player = state.register_player(sid, user.user_id, user.display_name, user.muted_until)
         tables = state.list_tables()
 
     await sio.save_session(
@@ -121,7 +162,10 @@ async def connect(sid: str, environ: dict, auth: dict | None) -> bool:
 @sio.event
 async def disconnect(sid: str) -> None:
     token = None
+    display_name = None
     async with state_lock:
+        player = state.get_player(sid)
+        display_name = player.display_name if player else None
         table_id, table, removed = state.unregister_player(sid)
         tables = state.list_tables()
         table_snapshot = table.snapshot() if table and not removed else None
@@ -130,6 +174,8 @@ async def disconnect(sid: str) -> None:
 
     if table_id and table_snapshot:
         await sio.emit("table:state", table_snapshot, room=table_room(table_id))
+        if display_name:
+            await broadcast_system_message(table_id, f"{display_name} left the table.")
     await sio.emit("lobby:snapshot", {"tables": tables}, room=LOBBY_ROOM)
     if table_id and token:
         asyncio.create_task(schedule_turn_timeout(table_id, token))
@@ -151,13 +197,29 @@ async def table_create(sid: str, payload: dict | None) -> None:
         max_players = int(payload.get("maxPlayers") or MAX_TABLE_PLAYERS)
     except (TypeError, ValueError):
         max_players = MAX_TABLE_PLAYERS
+    min_bet = _parse_int(payload.get("minBet"), 10, 1, 1000)
+    max_bet = _parse_int(payload.get("maxBet"), 500, 1, 10000)
+    if max_bet < min_bet:
+        max_bet = min_bet
+    decks = _parse_int(payload.get("decks"), 6, 1, 8)
+    starting_bank = _parse_int(payload.get("startingBank"), 2500, 100, 100000)
+    if starting_bank < min_bet:
+        starting_bank = min_bet
+    table_config = TableConfig(
+        min_bet=min_bet,
+        max_bet=max_bet,
+        decks=decks,
+        starting_bank=starting_bank,
+    )
 
+    player_display_name = None
     async with state_lock:
         player = state.get_player(sid)
         if not player:
             return
+        player_display_name = player.display_name
         prev_table_id, prev_table, prev_removed = state.remove_from_table(player)
-        table = state.create_table(player, name, is_private, max_players)
+        table = state.create_table(player, name, is_private, max_players, table_config)
         state.ensure_game(table)
         tables = state.list_tables()
         table_snapshot = table.snapshot()
@@ -173,6 +235,12 @@ async def table_create(sid: str, payload: dict | None) -> None:
     await sio.emit("table:state", table_snapshot, room=table_room(table.table_id))
     await sio.emit("lobby:snapshot", {"tables": tables}, room=LOBBY_ROOM)
     await emit_game_state(table.table_id)
+    await emit_chat_history(sid, table.table_id)
+    if player_display_name:
+        await broadcast_system_message(
+            table.table_id,
+            f"{player_display_name} created the table.",
+        )
 
 
 @sio.on("table:join")
@@ -186,10 +254,12 @@ async def table_join(sid: str, payload: dict | None) -> None:
     prev_snapshot = None
     table_snapshot = None
     resolved_id = table_id
+    player_display_name = None
     async with state_lock:
         player = state.get_player(sid)
         if not player:
             return
+        player_display_name = player.display_name
         try:
             if not resolved_id and invite_code:
                 resolved_id = state.resolve_invite_code(invite_code)
@@ -233,15 +303,23 @@ async def table_join(sid: str, payload: dict | None) -> None:
     await sio.emit("table:joined", {"tableId": resolved_id}, room=sid)
     await sio.emit("lobby:snapshot", {"tables": tables}, room=LOBBY_ROOM)
     await emit_game_state(resolved_id)
+    await emit_chat_history(sid, resolved_id)
+    if player_display_name:
+        await broadcast_system_message(
+            resolved_id,
+            f"{player_display_name} joined the table.",
+        )
 
 
 @sio.on("table:leave")
 async def table_leave(sid: str) -> None:
     token = None
+    display_name = None
     async with state_lock:
         player = state.get_player(sid)
         if not player:
             return
+        display_name = player.display_name
         table_id, table, removed = state.remove_from_table(player)
         tables = state.list_tables()
         table_snapshot = table.snapshot() if table and not removed else None
@@ -252,6 +330,8 @@ async def table_leave(sid: str) -> None:
         await sio.leave_room(sid, table_room(table_id))
         if table_snapshot:
             await sio.emit("table:state", table_snapshot, room=table_room(table_id))
+            if display_name:
+                await broadcast_system_message(table_id, f"{display_name} left the table.")
         await emit_game_state(table_id)
     await sio.emit("lobby:snapshot", {"tables": tables}, room=LOBBY_ROOM)
     if table_id and token:
@@ -272,6 +352,72 @@ async def table_ready(sid: str, payload: dict | None) -> None:
 
     if table_snapshot:
         await sio.emit("table:state", table_snapshot, room=table_room(table_snapshot["id"]))
+
+
+@sio.on("chat:sync")
+async def chat_sync(sid: str) -> None:
+    session = await sio.get_session(sid)
+    user_id = session.get("user_id") if session else None
+    if not user_id:
+        return
+    async with state_lock:
+        table_id = state.get_user_table(user_id)
+        if not table_id:
+            return
+        messages = state.get_chat_history(table_id)
+    await sio.emit("chat:history", {"tableId": table_id, "messages": messages}, room=sid)
+
+
+@sio.on("chat:send")
+async def chat_send(sid: str, payload: dict | None) -> None:
+    payload = payload or {}
+    message = str(payload.get("message") or "").strip()
+    if not message:
+        return
+    if len(message) > CHAT_MESSAGE_LIMIT:
+        await sio.emit(
+            "chat:error",
+            {"message": f"Message too long (max {CHAT_MESSAGE_LIMIT} characters)."},
+            room=sid,
+        )
+        return
+
+    error_message = None
+    table_id = None
+    chat_payload = None
+    async with state_lock:
+        player = state.get_player(sid)
+        if not player:
+            return
+        table_id = state.get_user_table(player.user_id)
+        if not table_id:
+            return
+        now = datetime.now(timezone.utc)
+        if player.muted_until and player.muted_until > now:
+            error_message = "You are muted."
+        elif player.muted_until and player.muted_until <= now:
+            player.muted_until = None
+        elif player.last_chat_at and (
+            now - player.last_chat_at
+        ).total_seconds() < CHAT_RATE_LIMIT_SECONDS:
+            error_message = "You're sending messages too fast."
+        else:
+            player.last_chat_at = now
+            chat_message = ChatMessage(
+                message_id=uuid.uuid4().hex,
+                table_id=table_id,
+                user_id=player.user_id,
+                display_name=player.display_name,
+                message=message,
+                created_at=now,
+            )
+            chat_payload = state.add_chat_message(table_id, chat_message)
+
+    if error_message:
+        await sio.emit("chat:error", {"message": error_message}, room=sid)
+        return
+    if chat_payload and table_id:
+        await sio.emit("chat:message", chat_payload, room=table_room(table_id))
 
 
 @sio.on("game:sync")
@@ -301,7 +447,11 @@ async def game_start(sid: str) -> None:
         table = state.tables.get(table_id)
         if not table:
             return
-        if any(not player.is_ready for player in table.players.values()):
+        if table.is_paused:
+            error = "Table is paused."
+        elif table.betting_locked:
+            error = "Betting is locked."
+        elif any(not player.is_ready for player in table.players.values()):
             error = "All players must be ready."
         else:
             game = state.ensure_game(table)
@@ -333,6 +483,8 @@ async def game_action(sid: str, payload: dict | None) -> None:
     error = None
     token: int | None = None
     table_id = None
+    events: list[dict] = []
+    round_id = None
     async with state_lock:
         table_id = state.get_user_table(user_id)
         if not table_id:
@@ -340,21 +492,27 @@ async def game_action(sid: str, payload: dict | None) -> None:
         table = state.tables.get(table_id)
         if not table or not table.game:
             return
-        game = table.game
-        if action == "hit":
-            error = game.hit(user_id)
-        elif action == "stand":
-            error = game.stand(user_id)
-        elif action == "double":
-            error = game.double_down(user_id)
-        elif action == "split":
-            error = game.split(user_id)
+        if table.is_paused:
+            error = "Table is paused."
+            round_id = table.game.round_id
+            table.game.turn_ends_at = None
+            token = None
         else:
-            error = "Unknown action."
+            game = table.game
+            if action == "hit":
+                error = game.hit(user_id)
+            elif action == "stand":
+                error = game.stand(user_id)
+            elif action == "double":
+                error = game.double_down(user_id)
+            elif action == "split":
+                error = game.split(user_id)
+            else:
+                error = "Unknown action."
 
-        events = game.consume_events()
-        round_id = game.round_id
-        token = _set_turn_deadline(table_id)
+            events = game.consume_events()
+            round_id = game.round_id
+            token = _set_turn_deadline(table_id)
 
     if error:
         await sio.emit("game:error", {"message": error}, room=sid)

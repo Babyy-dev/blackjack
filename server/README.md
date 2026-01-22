@@ -39,6 +39,19 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
+## Serve the frontend
+
+Build the React client and set `SERVE_FRONTEND=true` (optionally `FRONTEND_DIST_DIR`)
+to serve the production bundle from FastAPI.
+
+```powershell
+cd ..\client
+npm run build
+cd ..\server
+$env:SERVE_FRONTEND="true"
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
 ## Realtime (Socket.IO)
 
 Socket.IO uses the access token from `/api/auth/login` for authentication. Connect with:

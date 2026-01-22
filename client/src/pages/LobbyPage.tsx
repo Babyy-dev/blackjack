@@ -19,6 +19,10 @@ const LobbyPage = () => {
   const [name, setName] = useState('')
   const [maxPlayers, setMaxPlayers] = useState(6)
   const [isPrivate, setIsPrivate] = useState(false)
+  const [minBet, setMinBet] = useState(10)
+  const [maxBet, setMaxBet] = useState(500)
+  const [decks, setDecks] = useState(6)
+  const [startingBank, setStartingBank] = useState(2500)
   const [joinCode, setJoinCode] = useState('')
   const [pendingNavigation, setPendingNavigation] = useState(false)
 
@@ -112,16 +116,104 @@ const LobbyPage = () => {
               />
               Private table (invite code)
             </label>
+            <div>
+              <p className="text-xs uppercase tracking-[0.2rem] text-white/60">Table rules</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-xs uppercase tracking-[0.2rem] text-white/60">
+                    Min bet
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    value={minBet}
+                    onChange={(event) => {
+                      const value = Number(event.target.value)
+                      setMinBet(Number.isNaN(value) ? 10 : value)
+                    }}
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/60"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs uppercase tracking-[0.2rem] text-white/60">
+                    Max bet
+                  </span>
+                  <input
+                    type="number"
+                    min={10}
+                    max={10000}
+                    value={maxBet}
+                    onChange={(event) => {
+                      const value = Number(event.target.value)
+                      setMaxBet(Number.isNaN(value) ? 500 : value)
+                    }}
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/60"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs uppercase tracking-[0.2rem] text-white/60">
+                    Decks
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={8}
+                    value={decks}
+                    onChange={(event) => {
+                      const value = Number(event.target.value)
+                      setDecks(Number.isNaN(value) ? 6 : value)
+                    }}
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/60"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs uppercase tracking-[0.2rem] text-white/60">
+                    Starting bank
+                  </span>
+                  <input
+                    type="number"
+                    min={100}
+                    max={100000}
+                    value={startingBank}
+                    onChange={(event) => {
+                      const value = Number(event.target.value)
+                      setStartingBank(Number.isNaN(value) ? 2500 : value)
+                    }}
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/60"
+                  />
+                </label>
+              </div>
+            </div>
             <button
               onClick={() => {
                 const normalizedMax = Number.isFinite(maxPlayers)
                   ? Math.min(Math.max(maxPlayers, 2), 8)
                   : 6
+                const normalizedMinBet = Number.isFinite(minBet)
+                  ? Math.min(Math.max(minBet, 1), 1000)
+                  : 10
+                const normalizedMaxBet = Number.isFinite(maxBet)
+                  ? Math.min(Math.max(maxBet, normalizedMinBet), 10000)
+                  : Math.max(normalizedMinBet, 500)
+                const normalizedDecks = Number.isFinite(decks)
+                  ? Math.min(Math.max(decks, 1), 8)
+                  : 6
+                let normalizedBank = Number.isFinite(startingBank)
+                  ? Math.min(Math.max(startingBank, 100), 100000)
+                  : 2500
+                if (normalizedBank < normalizedMinBet) {
+                  normalizedBank = normalizedMinBet
+                }
                 setPendingNavigation(true)
                 createTable({
                   name: name.trim(),
                   maxPlayers: normalizedMax,
                   isPrivate,
+                  minBet: normalizedMinBet,
+                  maxBet: normalizedMaxBet,
+                  decks: normalizedDecks,
+                  startingBank: normalizedBank,
                 })
               }}
               className="w-full rounded-full bg-amber-300 px-6 py-3 text-xs font-semibold uppercase tracking-[0.25rem] text-[#1b1200] transition hover:-translate-y-0.5 hover:bg-amber-200 disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/40 disabled:hover:translate-y-0"

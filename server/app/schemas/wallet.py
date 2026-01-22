@@ -11,6 +11,8 @@ class WalletSummary(BaseModel):
     currency: str
     eth_address: str | None = None
     sol_address: str | None = None
+    eth_deposit_address: str | None = None
+    sol_deposit_address: str | None = None
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -34,3 +36,33 @@ class WalletResponse(BaseModel):
 class WalletLinkRequest(BaseModel):
     eth_address: str | None = None
     sol_address: str | None = None
+
+
+class WalletWithdrawalRequest(BaseModel):
+    chain: str
+    amount_tokens: int
+    address: str | None = None
+
+
+class WalletWithdrawalResponse(BaseModel):
+    id: uuid.UUID
+    chain: str
+    address: str
+    amount_tokens: int
+    status: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WalletWithdrawalPublic(BaseModel):
+    id: uuid.UUID
+    chain: str
+    address: str
+    amount_tokens: int
+    status: str
+    tx_hash: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

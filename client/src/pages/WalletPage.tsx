@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
-import { getWallet, linkWallet } from '../api/wallet'
+import { getWallet, getWithdrawals, linkWallet, requestWithdrawal } from '../api/wallet'
 
 const WalletPage = () => {
   const accessToken = useAuthStore((state) => state.accessToken)
@@ -11,17 +11,32 @@ const WalletPage = () => {
     queryFn: getWallet,
     enabled: Boolean(accessToken),
   })
+  const withdrawalsQuery = useQuery({
+    queryKey: ['wallet', 'withdrawals'],
+    queryFn: getWithdrawals,
+    enabled: Boolean(accessToken),
+  })
   const linkMutation = useMutation({
     mutationFn: linkWallet,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
     },
   })
+  const withdrawMutation = useMutation({
+    mutationFn: requestWithdrawal,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wallet'] })
+      queryClient.invalidateQueries({ queryKey: ['wallet', 'withdrawals'] })
+    },
+  })
   const [walletMessage, setWalletMessage] = useState<string | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
   const [ethAddress, setEthAddress] = useState<string | null>(null)
   const [solAddress, setSolAddress] = useState<string | null>(null)
-  const isBusy = isConnecting || linkMutation.isPending
+  const [withdrawChain, setWithdrawChain] = useState<'ETH' | 'SOL'>('ETH')
+  const [withdrawAmount, setWithdrawAmount] = useState(0)
+  const [withdrawAddress, setWithdrawAddress] = useState('')
+  const isBusy = isConnecting || linkMutation.isPending || withdrawMutation.isPending
 
   useEffect(() => {
     setEthAddress(data?.wallet.eth_address ?? null)
@@ -32,7 +47,18 @@ const WalletPage = () => {
     if (linkMutation.isError) {
       setWalletMessage('Wallet link failed. Please try again.')
     }
-  }, [linkMutation.isError])
+    if (withdrawMutation.isError) {
+      setWalletMessage('Withdrawal request failed. Check balance and address.')
+    }
+  }, [linkMutation.isError, withdrawMutation.isError])
+
+  useEffect(() => {
+    if (withdrawChain === 'ETH') {
+      setWithdrawAddress(data?.wallet.eth_address ?? '')
+    } else {
+      setWithdrawAddress(data?.wallet.sol_address ?? '')
+    }
+  }, [withdrawChain, data?.wallet.eth_address, data?.wallet.sol_address])
 
   const connectMetaMask = async () => {
     setWalletMessage(null)
@@ -105,26 +131,78 @@ const WalletPage = () => {
         <div className="rounded-3xl border border-white/10 bg-[#08161c] p-5 sm:p-6">
           <p className="text-xs uppercase tracking-[0.2rem] text-white/60">Deposit</p>
           <p className="mt-3 text-sm text-white/70">
-            Link a wallet to convert crypto to in-game tokens.
+            Send crypto to your personal deposit address. Tokens are credited after
+            confirmation.
           </p>
-          <button
-            className="mt-4 w-full rounded-full border border-white/20 px-4 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.25rem] text-white/70"
-            disabled
-          >
-            Coming soon
-          </button>
+          <div className="mt-4 space-y-3 text-xs uppercase tracking-[0.2rem] text-white/50">
+            <div className="rounded-2xl border border-white/10 bg-[#0d1f27] px-3 py-3">
+              <p className="text-[0.6rem] text-white/40">ETH deposit address</p>
+              <p className="mt-2 break-all text-white/70">
+                {data?.wallet.eth_deposit_address ?? 'Pending setup'}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-[#0d1f27] px-3 py-3">
+              <p className="text-[0.6rem] text-white/40">SOL deposit address</p>
+              <p className="mt-2 break-all text-white/70">
+                {data?.wallet.sol_deposit_address ?? 'Pending setup'}
+              </p>
+            </div>
+          </div>
         </div>
         <div className="rounded-3xl border border-white/10 bg-[#08161c] p-5 sm:p-6">
           <p className="text-xs uppercase tracking-[0.2rem] text-white/60">Withdraw</p>
           <p className="mt-3 text-sm text-white/70">
-            Request a payout once withdrawal approvals go live.
+            Submit a withdrawal request to your linked wallet.
           </p>
-          <button
-            className="mt-4 w-full rounded-full border border-white/20 px-4 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.25rem] text-white/70"
-            disabled
-          >
-            Coming soon
-          </button>
+          <div className="mt-4 space-y-3 text-xs uppercase tracking-[0.2rem] text-white/60">
+            <label className="block">
+              Chain
+              <select
+                value={withdrawChain}
+                onChange={(event) =>
+                  setWithdrawChain(event.target.value as 'ETH' | 'SOL')
+                }
+                className="mt-2 w-full rounded-xl border border-white/10 bg-[#0d1f27] px-3 py-2 text-xs text-white"
+              >
+                <option value="ETH">ETH</option>
+                <option value="SOL">SOL</option>
+              </select>
+            </label>
+            <label className="block">
+              Amount (TOKEN)
+              <input
+                type="number"
+                value={withdrawAmount}
+                min={1}
+                onChange={(event) => setWithdrawAmount(Number(event.target.value))}
+                className="mt-2 w-full rounded-xl border border-white/10 bg-[#0d1f27] px-3 py-2 text-xs text-white"
+              />
+            </label>
+            <label className="block">
+              Destination address
+              <input
+                type="text"
+                value={withdrawAddress}
+                onChange={(event) => setWithdrawAddress(event.target.value)}
+                placeholder="Paste address"
+                className="mt-2 w-full rounded-xl border border-white/10 bg-[#0d1f27] px-3 py-2 text-xs text-white"
+              />
+            </label>
+            <button
+              onClick={() =>
+                withdrawAmount > 0 &&
+                withdrawMutation.mutate({
+                  chain: withdrawChain,
+                  amount_tokens: withdrawAmount,
+                  address: withdrawAddress || undefined,
+                })
+              }
+              disabled={isBusy || withdrawAmount <= 0}
+              className="w-full rounded-full border border-amber-300/60 px-4 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.25rem] text-amber-200 transition hover:border-amber-300 hover:text-amber-100 disabled:cursor-not-allowed disabled:border-white/10 disabled:text-white/30"
+            >
+              Request withdrawal
+            </button>
+          </div>
         </div>
       </section>
 
@@ -229,6 +307,42 @@ const WalletPage = () => {
               </span>
             </div>
           ))}
+          <div className="mt-6">
+            <p className="text-xs uppercase tracking-[0.2rem] text-white/50">
+              Withdrawal requests
+            </p>
+            <div className="mt-3 space-y-3">
+              {withdrawalsQuery.isLoading && (
+                <div className="rounded-2xl border border-white/10 bg-[#08161c] px-4 py-4 text-sm text-white/60">
+                  Loading withdrawals...
+                </div>
+              )}
+              {!withdrawalsQuery.isLoading &&
+                (withdrawalsQuery.data?.length ?? 0) === 0 && (
+                  <div className="rounded-2xl border border-white/10 bg-[#08161c] px-4 py-4 text-sm text-white/60">
+                    No withdrawals yet.
+                  </div>
+                )}
+              {withdrawalsQuery.data?.map((withdrawal) => (
+                <div
+                  key={withdrawal.id}
+                  className="rounded-2xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white/70"
+                >
+                  <p className="text-sm font-semibold text-white">
+                    {withdrawal.chain} • {withdrawal.amount_tokens} TOKEN
+                  </p>
+                  <p className="text-xs uppercase tracking-[0.2rem] text-white/40">
+                    {withdrawal.status}
+                  </p>
+                  {withdrawal.tx_hash && (
+                    <p className="mt-2 break-all text-[0.6rem] text-white/30">
+                      {withdrawal.tx_hash}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
     </div>

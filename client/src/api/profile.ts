@@ -4,9 +4,9 @@ import type { Profile, User } from './types'
 const DEMO_PROFILE_KEY = 'vlackjack.demo.profile'
 const DEMO_SESSION_KEY = 'vlackjack.demo_session'
 const DEMO_MODE =
-  import.meta.env.VITE_DEMO_MODE === 'true' ||
-  import.meta.env.VITE_DEMO_MODE === '1' ||
-  import.meta.env.DEV
+  !import.meta.env.PROD &&
+  (import.meta.env.VITE_DEMO_MODE === 'true' ||
+    import.meta.env.VITE_DEMO_MODE === '1')
 
 const isDemoAccessToken = (token: string) => token.startsWith('demo-access:')
 

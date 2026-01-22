@@ -4,9 +4,9 @@ import { useAuthStore } from '../store/authStore'
 
 const DEMO_WALLET_KEY = 'vlackjack.demo.wallet'
 const DEMO_MODE =
-  import.meta.env.VITE_DEMO_MODE === 'true' ||
-  import.meta.env.VITE_DEMO_MODE === '1' ||
-  import.meta.env.DEV
+  !import.meta.env.PROD &&
+  (import.meta.env.VITE_DEMO_MODE === 'true' ||
+    import.meta.env.VITE_DEMO_MODE === '1')
 
 const isDemoAccessToken = (token: string | null) =>
   typeof token === 'string' && token.startsWith('demo-access:')
@@ -32,6 +32,8 @@ export type WalletSummary = {
   currency: string
   eth_address: string | null
   sol_address: string | null
+  eth_deposit_address?: string | null
+  sol_deposit_address?: string | null
   updated_at: string
 }
 
@@ -46,6 +48,23 @@ export type WalletTransaction = {
 export type WalletResponse = {
   wallet: WalletSummary
   transactions: WalletTransaction[]
+}
+
+export type WalletWithdrawal = {
+  id: string
+  chain: string
+  address: string
+  amount_tokens: number
+  status: string
+  tx_hash?: string | null
+  created_at: string
+  updated_at?: string
+}
+
+export type WalletWithdrawalRequest = {
+  chain: string
+  amount_tokens: number
+  address?: string | null
 }
 
 export type WalletLinkPayload = {
@@ -140,6 +159,39 @@ export const linkWallet = async (payload: WalletLinkPayload) => {
   return withAuthRetry((accessToken) =>
     request<WalletSummary>('/api/wallet/link', {
       method: 'PUT',
+      accessToken,
+      body: JSON.stringify(payload),
+    }),
+  )
+}
+
+export const getWithdrawals = async () => {
+  const token = useAuthStore.getState().accessToken
+  if (DEMO_MODE && isDemoAccessToken(token)) {
+    return [] as WalletWithdrawal[]
+  }
+  return withAuthRetry((accessToken) =>
+    request<WalletWithdrawal[]>('/api/wallet/withdrawals', {
+      accessToken,
+    }),
+  )
+}
+
+export const requestWithdrawal = async (payload: WalletWithdrawalRequest) => {
+  const token = useAuthStore.getState().accessToken
+  if (DEMO_MODE && isDemoAccessToken(token)) {
+    return {
+      id: `demo-withdraw-${Math.random().toString(36).slice(2, 8)}`,
+      chain: payload.chain,
+      address: payload.address ?? 'demo-address',
+      amount_tokens: payload.amount_tokens,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+    } satisfies WalletWithdrawal
+  }
+  return withAuthRetry((accessToken) =>
+    request<WalletWithdrawal>('/api/wallet/withdrawals', {
+      method: 'POST',
       accessToken,
       body: JSON.stringify(payload),
     }),

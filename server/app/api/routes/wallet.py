@@ -1,16 +1,28 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
+from app.crypto.addresses import derive_eth_address, derive_sol_address
+from app.crypto.pricing import tokens_from_base
 from app.core.deps import get_current_user, get_db
-from app.db.models import User, Wallet, WalletTransaction
+from app.db.models import (
+    CryptoWithdrawal,
+    User,
+    Wallet,
+    WalletDepositAddress,
+    WalletTransaction,
+)
 from app.schemas.wallet import (
     WalletLinkRequest,
     WalletResponse,
     WalletSummary,
     WalletTransactionPublic,
+    WalletWithdrawalPublic,
+    WalletWithdrawalRequest,
+    WalletWithdrawalResponse,
 )
 
 router = APIRouter()
@@ -27,12 +39,71 @@ def ensure_wallet(db: Session, user: User) -> Wallet:
     return wallet
 
 
+def _get_next_derivation_index(db: Session, chain: str) -> int:
+    current = db.scalar(
+        select(func.max(WalletDepositAddress.derivation_index)).where(
+            WalletDepositAddress.chain == chain
+        )
+    )
+    return 0 if current is None else int(current) + 1
+
+
+def ensure_deposit_address(db: Session, user: User, wallet: Wallet, chain: str) -> None:
+    existing_address = (
+        wallet.eth_deposit_address if chain == "ETH" else wallet.sol_deposit_address
+    )
+    if existing_address:
+        return
+
+    deposit_address = db.scalar(
+        select(WalletDepositAddress)
+        .where(
+            WalletDepositAddress.wallet_id == wallet.id,
+            WalletDepositAddress.chain == chain,
+            WalletDepositAddress.is_active.is_(True),
+        )
+        .order_by(WalletDepositAddress.created_at.desc())
+    )
+    if deposit_address:
+        if chain == "ETH":
+            wallet.eth_deposit_address = deposit_address.address
+        else:
+            wallet.sol_deposit_address = deposit_address.address
+        db.commit()
+        return
+
+    if chain == "ETH":
+        if not settings.eth_deposit_xpub:
+            return
+        index = _get_next_derivation_index(db, chain)
+        address = derive_eth_address(settings.eth_deposit_xpub, index)
+        wallet.eth_deposit_address = address
+    else:
+        if not settings.sol_deposit_mnemonic:
+            return
+        index = _get_next_derivation_index(db, chain)
+        address = derive_sol_address(settings.sol_deposit_mnemonic, index)
+        wallet.sol_deposit_address = address
+
+    deposit_address = WalletDepositAddress(
+        wallet_id=wallet.id,
+        user_id=user.id,
+        chain=chain,
+        address=address,
+        derivation_index=index,
+    )
+    db.add(deposit_address)
+    db.commit()
+
+
 @router.get("", response_model=WalletResponse)
 def get_wallet(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> WalletResponse:
     wallet = ensure_wallet(db, current_user)
+    ensure_deposit_address(db, current_user, wallet, "ETH")
+    ensure_deposit_address(db, current_user, wallet, "SOL")
     transactions = db.scalars(
         select(WalletTransaction)
         .where(WalletTransaction.wallet_id == wallet.id)
@@ -59,3 +130,78 @@ def link_wallet(
     db.commit()
     db.refresh(wallet)
     return WalletSummary.model_validate(wallet)
+
+
+@router.get("/withdrawals", response_model=list[WalletWithdrawalPublic])
+def list_withdrawals(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[WalletWithdrawalPublic]:
+    wallet = ensure_wallet(db, current_user)
+    withdrawals = db.scalars(
+        select(CryptoWithdrawal)
+        .where(CryptoWithdrawal.wallet_id == wallet.id)
+        .order_by(CryptoWithdrawal.created_at.desc())
+        .limit(20)
+    ).all()
+    return [WalletWithdrawalPublic.model_validate(entry) for entry in withdrawals]
+
+
+@router.post("/withdrawals", response_model=WalletWithdrawalResponse)
+def request_withdrawal(
+    payload: WalletWithdrawalRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> WalletWithdrawalResponse:
+    chain = payload.chain.upper()
+    if chain not in {"ETH", "SOL"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported chain")
+
+    amount = payload.amount_tokens
+    if amount <= 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid amount")
+    if amount < settings.crypto_min_withdrawal or amount > settings.crypto_max_withdrawal:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Amount outside withdrawal limits",
+        )
+
+    wallet = ensure_wallet(db, current_user)
+    address = payload.address or (
+        wallet.eth_address if chain == "ETH" else wallet.sol_address
+    )
+    if not address:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Withdrawal address not set",
+        )
+    if wallet.balance < amount:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Insufficient balance",
+        )
+
+    wallet.balance -= amount
+    transaction = WalletTransaction(
+        wallet_id=wallet.id,
+        amount=-amount,
+        kind="crypto_withdrawal",
+        status="pending",
+    )
+    withdrawal = CryptoWithdrawal(
+        wallet_id=wallet.id,
+        user_id=current_user.id,
+        chain=chain,
+        address=address,
+        amount_tokens=amount,
+        status="pending",
+        transaction_id=transaction.id,
+    )
+    db.add(withdrawal)
+    db.add(transaction)
+    db.flush()
+    withdrawal.transaction_id = transaction.id
+    db.commit()
+    db.refresh(withdrawal)
+
+    return WalletWithdrawalResponse.model_validate(withdrawal)

@@ -17,6 +17,15 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     upload_dir: str = "uploads"
     avatar_max_bytes: int = 2 * 1024 * 1024
+    serve_frontend: bool = False
+    frontend_dist_dir: str | None = None
+    crypto_webhook_secret: str = "change-me"
+    eth_deposit_xpub: str | None = None
+    sol_deposit_mnemonic: str | None = None
+    eth_usd_rate: float = 3000.0
+    sol_usd_rate: float = 100.0
+    crypto_min_withdrawal: int = 10
+    crypto_max_withdrawal: int = 100000
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

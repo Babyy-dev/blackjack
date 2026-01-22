@@ -225,6 +225,49 @@ class BlackjackGame:
             self._dealer_turn()
         return None
 
+    def force_end_round(self) -> str | None:
+        if not self.is_round_active():
+            return "No round in progress."
+        self.show_dealer_hole_card = True
+        self._dealer_turn()
+        return None
+
+    def force_result(self, result: str) -> str | None:
+        if not self.is_round_active():
+            return "No round in progress."
+        self.show_dealer_hole_card = True
+        summary: dict[str, dict[str, int]] = {}
+
+        for user_id, seat in self.players.items():
+            for hand in seat.hands:
+                if hand.bet == 0:
+                    continue
+                if result in {"dealer_win", "dealer_blackjack"}:
+                    hand.result = "lose"
+                elif result in {"player_win", "dealer_bust"}:
+                    hand.result = "win"
+                else:
+                    hand.result = "push"
+                hand.status = "stand"
+
+                payout = 0
+                if hand.result == "win":
+                    payout = hand.bet * 2
+                elif hand.result == "push":
+                    payout = hand.bet
+
+                seat.bank += payout
+                summary.setdefault(user_id, {"delta": 0})
+                summary[user_id]["delta"] += payout - hand.bet
+
+        self._log_event("force_result", None, {"result": result, "summary": summary})
+        self.status = "round_end"
+        self.active_player_id = None
+        self.active_hand_id = None
+        self.turn_token += 1
+        self.turn_ends_at = None
+        return None
+
     def _deal_initial_cards(self) -> None:
         for _ in range(2):
             for user_id in self.seat_order:

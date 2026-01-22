@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func, JSON
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, String, Text, func, JSON, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Uuid
 
@@ -16,6 +16,9 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_banned: Mapped[bool] = mapped_column(Boolean, default=False)
+    banned_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    muted_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -105,6 +108,8 @@ class Wallet(Base):
     currency: Mapped[str] = mapped_column(String(16), default="TOKEN", nullable=False)
     eth_address: Mapped[str | None] = mapped_column(String(128), nullable=True)
     sol_address: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    eth_deposit_address: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    sol_deposit_address: Mapped[str | None] = mapped_column(String(128), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -117,6 +122,105 @@ class Wallet(Base):
         back_populates="wallet",
         cascade="all, delete-orphan",
     )
+    deposit_addresses: Mapped[list["WalletDepositAddress"]] = relationship(
+        back_populates="wallet",
+        cascade="all, delete-orphan",
+    )
+    crypto_deposits: Mapped[list["CryptoDeposit"]] = relationship(
+        back_populates="wallet",
+        cascade="all, delete-orphan",
+    )
+    crypto_withdrawals: Mapped[list["CryptoWithdrawal"]] = relationship(
+        back_populates="wallet",
+        cascade="all, delete-orphan",
+    )
+
+
+class WalletDepositAddress(Base):
+    __tablename__ = "wallet_deposit_addresses"
+    __table_args__ = (
+        UniqueConstraint("chain", "address", name="uq_wallet_deposit_chain_address"),
+        UniqueConstraint("chain", "derivation_index", name="uq_wallet_deposit_chain_index"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    wallet_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("wallets.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    chain: Mapped[str] = mapped_column(String(16), nullable=False)
+    address: Mapped[str] = mapped_column(String(128), nullable=False)
+    derivation_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    wallet: Mapped["Wallet"] = relationship(back_populates="deposit_addresses")
+
+
+class CryptoDeposit(Base):
+    __tablename__ = "crypto_deposits"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    wallet_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("wallets.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    chain: Mapped[str] = mapped_column(String(16), nullable=False)
+    address: Mapped[str] = mapped_column(String(128), nullable=False)
+    tx_hash: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
+    amount_base: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    amount_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(24), default="confirmed", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    wallet: Mapped["Wallet"] = relationship(back_populates="crypto_deposits")
+
+
+class CryptoWithdrawal(Base):
+    __tablename__ = "crypto_withdrawals"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    transaction_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("wallet_transactions.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    wallet_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("wallets.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    chain: Mapped[str] = mapped_column(String(16), nullable=False)
+    address: Mapped[str] = mapped_column(String(128), nullable=False)
+    amount_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
+    amount_base: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    status: Mapped[str] = mapped_column(String(24), default="pending", nullable=False)
+    tx_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    wallet: Mapped["Wallet"] = relationship(back_populates="crypto_withdrawals")
 
 
 class WalletTransaction(Base):
@@ -158,5 +262,21 @@ class GameActionLog(Base):
     )
     user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid(as_uuid=True), nullable=True)
     action: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AdminActionLog(Base):
+    __tablename__ = "admin_action_logs"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    admin_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    action: Mapped[str] = mapped_column(String(64), nullable=False)
+    target_user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid(as_uuid=True), nullable=True)
+    target_table_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     payload: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

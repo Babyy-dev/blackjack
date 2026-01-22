@@ -7,9 +7,9 @@ const ACCESS_TOKEN_KEY = 'vlackjack.access_token'
 const REFRESH_TOKEN_KEY = 'vlackjack.refresh_token'
 const DEMO_SESSION_KEY = 'vlackjack.demo_session'
 const DEMO_MODE =
-  import.meta.env.VITE_DEMO_MODE === 'true' ||
-  import.meta.env.VITE_DEMO_MODE === '1' ||
-  import.meta.env.DEV
+  !import.meta.env.PROD &&
+  (import.meta.env.VITE_DEMO_MODE === 'true' ||
+    import.meta.env.VITE_DEMO_MODE === '1')
 
 const readToken = (key: string) => {
   if (typeof window === 'undefined') return null

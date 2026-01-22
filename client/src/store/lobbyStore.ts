@@ -4,9 +4,9 @@ import { createSocket } from '../realtime/socket'
 import { useAuthStore } from './authStore'
 
 const DEMO_MODE =
-  import.meta.env.VITE_DEMO_MODE === 'true' ||
-  import.meta.env.VITE_DEMO_MODE === '1' ||
-  import.meta.env.DEV
+  !import.meta.env.PROD &&
+  (import.meta.env.VITE_DEMO_MODE === 'true' ||
+    import.meta.env.VITE_DEMO_MODE === '1')
 
 const isDemoAccessToken = (token: string | null) =>
   typeof token === 'string' && token.startsWith('demo-access:')
@@ -66,9 +66,17 @@ const createDemoPlayers = (count: number) => {
   return players
 }
 
+type TableConfigPayload = {
+  minBet?: number
+  maxBet?: number
+  decks?: number
+  startingBank?: number
+}
+
 const buildDemoTableState = (
   summary: LobbyTableSummary,
   overrideCount?: number,
+  config?: TableConfigPayload,
 ): TableState => ({
   id: summary.id,
   name: summary.name,
@@ -76,6 +84,10 @@ const buildDemoTableState = (
   maxPlayers: summary.maxPlayers,
   inviteCode: summary.isPrivate ? summary.id.slice(0, 6).toUpperCase() : null,
   players: createDemoPlayers(overrideCount ?? summary.playerCount ?? 1),
+  minBet: config?.minBet ?? 10,
+  maxBet: config?.maxBet ?? 500,
+  decks: config?.decks ?? 6,
+  startingBank: config?.startingBank ?? 2500,
 })
 
 export type LobbyTableSummary = {
@@ -99,12 +111,20 @@ export type TableState = {
   maxPlayers: number
   inviteCode?: string | null
   players: TablePlayer[]
+  minBet?: number
+  maxBet?: number
+  decks?: number
+  startingBank?: number
 }
 
 export type CreateTablePayload = {
   name: string
   maxPlayers: number
   isPrivate: boolean
+  minBet: number
+  maxBet: number
+  decks: number
+  startingBank: number
 }
 
 type LobbyState = {
@@ -161,6 +181,14 @@ const wireSocket = (
 
   socket.on('table:error', (payload: { message?: string } | null) => {
     set({ error: payload?.message ?? 'Table error' })
+  })
+
+  socket.on('table:kicked', () => {
+    set({
+      currentTableId: null,
+      currentTable: null,
+      error: 'Removed from table by admin.',
+    })
   })
 }
 
@@ -264,7 +292,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
         maxPlayers: payload.maxPlayers,
         playerCount: 1,
       }
-      const tableState = buildDemoTableState(summary, 1)
+      const tableState = buildDemoTableState(summary, 1, payload)
       set((state) => ({
         tables: [summary, ...state.tables],
         currentTableId: id,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 import uuid
 
 from app.game.blackjack import BlackjackGame
@@ -8,6 +9,37 @@ from app.game.blackjack import BlackjackGame
 
 MIN_TABLE_PLAYERS = 2
 MAX_TABLE_PLAYERS = 8
+CHAT_HISTORY_LIMIT = 150
+
+
+@dataclass
+class TableConfig:
+    min_bet: int = 10
+    max_bet: int = 500
+    decks: int = 6
+    starting_bank: int = 2500
+
+
+@dataclass
+class ChatMessage:
+    message_id: str
+    table_id: str
+    user_id: str | None
+    display_name: str
+    message: str
+    created_at: datetime
+    system: bool = False
+
+    def payload(self) -> dict:
+        return {
+            "id": self.message_id,
+            "tableId": self.table_id,
+            "userId": self.user_id,
+            "displayName": self.display_name,
+            "message": self.message,
+            "createdAt": self.created_at.isoformat(),
+            "system": self.system,
+        }
 
 
 class TableError(RuntimeError):
@@ -22,6 +54,8 @@ class PlayerState:
     display_name: str
     sid: str
     is_ready: bool = False
+    last_chat_at: datetime | None = None
+    muted_until: datetime | None = None
 
 
 @dataclass
@@ -31,8 +65,12 @@ class TableState:
     is_private: bool
     max_players: int
     invite_code: str | None = None
+    config: TableConfig = field(default_factory=TableConfig)
+    is_paused: bool = False
+    betting_locked: bool = False
     players: dict[str, PlayerState] = field(default_factory=dict)
     game: BlackjackGame | None = None
+    chat_log: list[ChatMessage] = field(default_factory=list)
 
     def summary(self) -> dict:
         return {
@@ -50,6 +88,12 @@ class TableState:
             "isPrivate": self.is_private,
             "maxPlayers": self.max_players,
             "inviteCode": self.invite_code,
+            "isPaused": self.is_paused,
+            "bettingLocked": self.betting_locked,
+            "minBet": self.config.min_bet,
+            "maxBet": self.config.max_bet,
+            "decks": self.config.decks,
+            "startingBank": self.config.starting_bank,
             "players": [
                 {
                     "userId": player.user_id,
@@ -88,14 +132,31 @@ class LobbyState:
 
     def ensure_game(self, table: TableState) -> BlackjackGame:
         if not table.game:
-            table.game = BlackjackGame(table_id=table.table_id)
+            table.game = BlackjackGame(
+                table_id=table.table_id,
+                min_bet=table.config.min_bet,
+                max_bet=table.config.max_bet,
+                decks=table.config.decks,
+                default_bank=table.config.starting_bank,
+            )
         table.game.sync_players(
             [(player.user_id, player.display_name) for player in table.players.values()]
         )
         return table.game
 
-    def register_player(self, sid: str, user_id: str, display_name: str) -> PlayerState:
-        player = PlayerState(user_id=user_id, display_name=display_name, sid=sid)
+    def register_player(
+        self,
+        sid: str,
+        user_id: str,
+        display_name: str,
+        muted_until: datetime | None = None,
+    ) -> PlayerState:
+        player = PlayerState(
+            user_id=user_id,
+            display_name=display_name,
+            sid=sid,
+            muted_until=muted_until,
+        )
         self.sid_to_player[sid] = player
         return player
 
@@ -140,6 +201,7 @@ class LobbyState:
         name: str,
         is_private: bool,
         max_players: int,
+        config: TableConfig | None = None,
     ) -> TableState:
         normalized_max = min(max(max_players, MIN_TABLE_PLAYERS), MAX_TABLE_PLAYERS)
         table_id = uuid.uuid4().hex[:8]
@@ -150,12 +212,28 @@ class LobbyState:
             is_private=is_private,
             max_players=normalized_max,
             invite_code=invite_code,
+            config=config or TableConfig(),
         )
         table.players[player.user_id] = player
         player.is_ready = False
         self.tables[table_id] = table
         self.user_to_table[player.user_id] = table_id
         return table
+
+    def get_chat_history(self, table_id: str) -> list[dict]:
+        table = self.tables.get(table_id)
+        if not table:
+            return []
+        return [message.payload() for message in table.chat_log]
+
+    def add_chat_message(self, table_id: str, message: ChatMessage) -> dict | None:
+        table = self.tables.get(table_id)
+        if not table:
+            return None
+        table.chat_log.append(message)
+        if len(table.chat_log) > CHAT_HISTORY_LIMIT:
+            table.chat_log = table.chat_log[-CHAT_HISTORY_LIMIT:]
+        return message.payload()
 
     def join_table(self, player: PlayerState, table_id: str) -> TableState:
         table = self.tables.get(table_id)

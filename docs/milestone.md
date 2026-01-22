@@ -2,9 +2,9 @@
 Status: [!]
 
 Progress snapshot
-- Done: 47
+- Done: 49
 - In progress: 0
-- Not started: 53
+- Not started: 51
 - Total tasks: 100
 
 This roadmap tracks the build status for the Multiplayer Crypto-Enabled Blackjack Platform.
@@ -161,14 +161,14 @@ Deliverables
 
 ---
 
-## Phase 10 - Admin and Moderation System [!]
+## Phase 10 - Admin and Moderation System [x]
 
 Tasks
 - [x] Admin command system
-- [?] Live spectating
+- [x] Live spectating
 - [x] User management
 - [x] Economy controls (UI placeholders)
-- [?] Audit logs (backend)
+- [x] Audit logs (backend)
 
 Deliverables
 - [x] Admin dashboard

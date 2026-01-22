@@ -4,8 +4,10 @@ Status: [!]
 Progress notes
 - UI layout and sections scaffolded in frontend
 - Admin actions wired (user status, session reset, wallet adjustments)
-- Game action/round logs recorded in backend (UI views pending)
-- Live game monitor and audit log feeds still pending
+- Admin action logs stored in backend with API access
+- Live table snapshots and moderation endpoints available (kick/force stand/end round)
+- Game action/round logs recorded in backend (UI views wired)
+- Live game monitor and audit log feeds wired to backend APIs
 
 The Admin Dashboard provides control over players, tables, economy, security, and system operations.
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import TableChat from '../components/TableChat'
 import { useGameStore } from '../game/store'
 import { useAuthStore } from '../store/authStore'
 import { useLobbyStore } from '../store/lobbyStore'
@@ -117,42 +118,88 @@ const TablePage = () => {
         </div>
       </header>
 
-      <section className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
-              Players
-            </h2>
-            <p className="mt-2 text-xs uppercase tracking-[0.2rem] text-white/60">
-              {readyCount}/{players.length} ready
-            </p>
-          </div>
-          <button
-            onClick={() => setReady(!myPlayer?.isReady)}
-            className="rounded-full bg-amber-300 px-6 py-2 text-xs font-semibold uppercase tracking-[0.25rem] text-[#1b1200] transition hover:-translate-y-0.5 hover:bg-amber-200"
-            disabled={!isConnected || !tableId || !myPlayer}
-          >
-            {myPlayer?.isReady ? 'Unready' : 'Ready'}
-          </button>
-        </div>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          {players.map((player) => (
-            <div
-              key={player.userId}
-              className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white/70"
-            >
-              <span>{player.displayName}</span>
-              <span
-                className={`text-xs uppercase tracking-[0.2rem] ${
-                  player.isReady ? 'text-emerald-300' : 'text-white/40'
-                }`}
-              >
-                {player.isReady ? 'Ready' : 'Waiting'}
-              </span>
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
+                Players
+              </h2>
+              <p className="mt-2 text-xs uppercase tracking-[0.2rem] text-white/60">
+                {readyCount}/{players.length} ready
+              </p>
             </div>
-          ))}
+            <button
+              onClick={() => setReady(!myPlayer?.isReady)}
+              className="rounded-full bg-amber-300 px-6 py-2 text-xs font-semibold uppercase tracking-[0.25rem] text-[#1b1200] transition hover:-translate-y-0.5 hover:bg-amber-200"
+              disabled={!isConnected || !tableId || !myPlayer}
+            >
+              {myPlayer?.isReady ? 'Unready' : 'Ready'}
+            </button>
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {players.map((player) => (
+              <div
+                key={player.userId}
+                className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white/70"
+              >
+                <span>{player.displayName}</span>
+                <span
+                  className={`text-xs uppercase tracking-[0.2rem] ${
+                    player.isReady ? 'text-emerald-300' : 'text-white/40'
+                  }`}
+                >
+                  {player.isReady ? 'Ready' : 'Waiting'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="space-y-6">
+          <section className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+            <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
+              Table rules
+            </h2>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-[#08161c] px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.2rem] text-white/50">
+                  Min bet
+                </p>
+                <p className="mt-2 text-lg font-semibold text-white">
+                  {currentTable?.minBet ?? '--'}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-[#08161c] px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.2rem] text-white/50">
+                  Max bet
+                </p>
+                <p className="mt-2 text-lg font-semibold text-white">
+                  {currentTable?.maxBet ?? '--'}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-[#08161c] px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.2rem] text-white/50">
+                  Decks
+                </p>
+                <p className="mt-2 text-lg font-semibold text-white">
+                  {currentTable?.decks ?? '--'}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-[#08161c] px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.2rem] text-white/50">
+                  Starting bank
+                </p>
+                <p className="mt-2 text-lg font-semibold text-white">
+                  {currentTable?.startingBank ?? '--'}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <TableChat />
         </div>
-      </section>
+      </div>
 
       <section className="rounded-3xl border border-white/10 bg-[#08161c] p-5 text-sm text-white/70 sm:p-6">
         <p className="text-xs uppercase tracking-[0.2rem] text-white/50">Game status</p>

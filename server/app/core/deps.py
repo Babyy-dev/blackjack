@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from datetime import datetime, timezone
 import uuid
 
 from fastapi import Depends, HTTPException, status
@@ -52,6 +53,13 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Inactive or missing user",
         )
+    now = datetime.now(timezone.utc)
+    if user.is_banned and (user.banned_until is None or user.banned_until > now):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account banned")
+    if user.banned_until and user.banned_until <= now and user.is_banned:
+        user.is_banned = False
+        user.banned_until = None
+        db.commit()
     return user
 
 

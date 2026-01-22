@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import TableChat from '../components/TableChat'
 import AnimatedBackground from '../game/components/AnimatedBackground'
 import GameHand from '../game/components/GameHand'
 import GameHeader from '../game/components/GameHeader'
@@ -84,6 +85,7 @@ const GamePage = () => {
         ))}
         <PlayerToolbar />
       </main>
+      <TableChat variant="game" />
       <TitleScreen />
     </div>
   )
