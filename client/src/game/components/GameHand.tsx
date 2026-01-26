@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { Hand, Player } from '../types'
+import type { Card, Hand, Player } from '../types'
 import { useGameStore } from '../store'
 import HandTotal from './HandTotal'
 import HandBet from './HandBet'
