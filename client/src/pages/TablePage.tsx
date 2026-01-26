@@ -20,6 +20,7 @@ const TablePage = () => {
   } = useLobbyStore()
   const bindSocket = useGameStore((state) => state.bindSocket)
   const gameStatus = useGameStore((state) => state.status)
+  const serverError = useGameStore((state) => state.serverError)
   const autoReadyRef = useRef<string | null>(null)
   const startKeyRef = useRef<string | null>(null)
 
@@ -99,7 +100,6 @@ const TablePage = () => {
           <button
             onClick={() => {
               if (socket?.connected) socket.emit('game:start')
-              navigate('/game')
             }}
             disabled={!canStartGame}
             className="rounded-full border border-amber-300/60 px-4 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.25rem] text-amber-200 transition hover:border-amber-300 hover:text-amber-100 disabled:cursor-not-allowed disabled:border-white/20 disabled:text-white/40"
@@ -204,6 +204,11 @@ const TablePage = () => {
       <section className="rounded-3xl border border-white/10 bg-[#08161c] p-5 text-sm text-white/70 sm:p-6">
         <p className="text-xs uppercase tracking-[0.2rem] text-white/50">Game status</p>
         <p className="mt-3">{statusMessage}</p>
+        {serverError && (
+          <p className="mt-3 text-xs uppercase tracking-[0.2rem] text-red-200">
+            {serverError}
+          </p>
+        )}
       </section>
     </div>
   )

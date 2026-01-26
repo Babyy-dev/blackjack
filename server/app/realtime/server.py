@@ -388,9 +388,15 @@ async def chat_send(sid: str, payload: dict | None) -> None:
     async with state_lock:
         player = state.get_player(sid)
         if not player:
+            await sio.emit("chat:error", {"message": "Chat session not found."}, room=sid)
             return
         table_id = state.get_user_table(player.user_id)
         if not table_id:
+            await sio.emit(
+                "chat:error",
+                {"message": "Join a table before sending chat messages."},
+                room=sid,
+            )
             return
         now = datetime.now(timezone.utc)
         if player.muted_until and player.muted_until > now:

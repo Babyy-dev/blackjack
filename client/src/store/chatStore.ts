@@ -95,7 +95,10 @@ export const useChatStore = create<ChatState>((set, get) => {
     sendMessage: (message) => {
       const socket = get().socket
       const tableId = get().tableId
-      if (!socket?.connected || !tableId) return
+      if (!socket?.connected || !tableId) {
+        set({ error: 'Chat is offline. Reconnect to the table.' })
+        return
+      }
       const trimmed = message.trim()
       if (!trimmed) return
       if (trimmed.length > MAX_MESSAGE_LENGTH) {

@@ -71,11 +71,16 @@ const loadSound = async (
   sound: SoundId,
   onProgress?: (value: number) => void,
 ): Promise<void> => {
-  const response = await fetch(files.get(sound)!)
-  const arrayBuffer = await response.arrayBuffer()
-  const audioBuffer = await ctx.decodeAudioData(arrayBuffer)
-  buffers.set(sound, audioBuffer)
-  if (onProgress) onProgress(SOUND_PERCENT)
+  try {
+    const response = await fetch(files.get(sound)!)
+    const arrayBuffer = await response.arrayBuffer()
+    const audioBuffer = await ctx.decodeAudioData(arrayBuffer)
+    buffers.set(sound, audioBuffer)
+  } catch {
+    // Ignore individual sound failures so the game can still start.
+  } finally {
+    if (onProgress) onProgress(SOUND_PERCENT)
+  }
 }
 
 export const loadSounds = async (onProgress?: (value: number) => void): Promise<void[]> => {

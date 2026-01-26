@@ -38,7 +38,10 @@ const TableChat = ({ variant = 'default' }: TableChatProps) => {
     listRef.current.scrollTop = listRef.current.scrollHeight
   }, [messages.length, isOpen])
 
-  const canSend = useMemo(() => Boolean(isConnected && tableId), [isConnected, tableId])
+  const canSend = useMemo(
+    () => Boolean(isConnected && socket?.connected && tableId),
+    [isConnected, socket?.connected, tableId],
+  )
 
   const submitMessage = () => {
     const trimmed = draft.trim()
