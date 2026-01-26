@@ -15,11 +15,14 @@ from app.db.models import (
     WalletDepositAddress,
     WalletTransaction,
 )
+from app.realtime.server import emit_game_state, state, state_lock
 from app.schemas.wallet import (
     WalletLinkRequest,
     WalletResponse,
     WalletSummary,
     WalletTransactionPublic,
+    WalletTableDepositRequest,
+    WalletTableDepositResponse,
     WalletWithdrawalPublic,
     WalletWithdrawalRequest,
     WalletWithdrawalResponse,
@@ -205,3 +208,74 @@ def request_withdrawal(
     db.refresh(withdrawal)
 
     return WalletWithdrawalResponse.model_validate(withdrawal)
+
+
+@router.post("/table/deposit", response_model=WalletTableDepositResponse)
+async def deposit_to_table(
+    payload: WalletTableDepositRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> WalletTableDepositResponse:
+    amount = payload.amount_tokens
+    wallet = ensure_wallet(db, current_user)
+    if wallet.balance < amount:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Insufficient wallet balance",
+        )
+
+    user_id = str(current_user.id)
+    resolved_table_id: str | None = None
+    updated_bank: int | None = None
+
+    async with state_lock:
+        resolved_table_id = payload.table_id or state.get_user_table(user_id)
+        if not resolved_table_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Join a table before depositing.",
+            )
+        table = state.tables.get(resolved_table_id)
+        if not table:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Table not found.")
+        game = state.ensure_game(table)
+        error = game.credit_bank(user_id, amount)
+        if error:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+        seat = game.players.get(user_id)
+        updated_bank = seat.bank if seat else None
+
+    try:
+        wallet.balance -= amount
+        transaction = WalletTransaction(
+            wallet_id=wallet.id,
+            amount=-amount,
+            kind="table_deposit",
+            status="completed",
+        )
+        db.add(transaction)
+        db.flush()
+        db.commit()
+        db.refresh(wallet)
+        db.refresh(transaction)
+    except Exception as exc:
+        if resolved_table_id:
+            async with state_lock:
+                table = state.tables.get(resolved_table_id)
+                if table and table.game:
+                    seat = table.game.players.get(user_id)
+                    if seat:
+                        seat.bank = max(0, seat.bank - amount)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Deposit failed.",
+        ) from exc
+
+    await emit_game_state(resolved_table_id)
+
+    return WalletTableDepositResponse(
+        wallet=WalletSummary.model_validate(wallet),
+        transaction=WalletTransactionPublic.model_validate(transaction),
+        table_id=resolved_table_id,
+        table_bank=updated_bank or 0,
+    )

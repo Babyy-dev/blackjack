@@ -268,6 +268,16 @@ class BlackjackGame:
         self.turn_ends_at = None
         return None
 
+    def credit_bank(self, user_id: str, amount: int) -> str | None:
+        if amount <= 0:
+            return "Invalid amount."
+        seat = self.players.get(user_id)
+        if not seat:
+            return "Seat not found."
+        seat.bank += amount
+        self._log_event("wallet_deposit", user_id, {"amount": amount})
+        return None
+
     def _deal_initial_cards(self) -> None:
         for _ in range(2):
             for user_id in self.seat_order:

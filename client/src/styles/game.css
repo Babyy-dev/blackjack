@@ -15,8 +15,9 @@
   display: flex;
   flex-direction: column-reverse;
   align-items: center;
-  gap: 8rem;
-  padding: 2rem 1rem 1rem 1rem;
+  justify-content: space-between;
+  gap: 4rem;
+  padding: 4.5rem 1rem 2rem;
   height: 100%;
 }
 
@@ -25,7 +26,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 8rem;
+  gap: 3rem;
   min-height: 11.2rem;
 }
 
@@ -34,7 +35,8 @@
 }
 
 .player-row.dealer {
-  z-index: -1;
+  position: relative;
+  z-index: 1;
 }
 
 .game button {
@@ -42,15 +44,15 @@
   align-items: center;
   justify-content: center;
   text-transform: uppercase;
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   font-variation-settings: 'wght' 500;
   line-height: 1;
-  padding: 1rem 1.5rem;
-  border-radius: 1.75rem;
+  padding: 0.8rem 1.1rem;
+  border-radius: 1.2rem;
   border: 0;
-  letter-spacing: 0.05rem;
-  background-color: rgba(255, 255, 239, 0.9);
-  color: currentColor;
+  letter-spacing: 0.08rem;
+  background-color: rgba(255, 255, 239, 0.96);
+  color: #1b1200;
   cursor: pointer;
 }
 
@@ -83,15 +85,15 @@
 
 .player-toolbar {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
-  width: max-content;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.6rem;
+  width: min(92vw, 520px);
   margin: 0 auto;
   order: -1;
 }
 
 .player-toolbar button:first-of-type {
-  font-size: 2rem;
+  font-size: 1.3rem;
 }
 
 .game-header {
@@ -103,7 +105,8 @@
   padding: 0 1rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 0.5rem;
   height: 60px;
   pointer-events: none;
 }
@@ -380,47 +383,278 @@
   }
 }
 
-.bank {
-  background: rgba(0, 0, 0, 0.2);
-  height: 4rem;
+.game .bank {
+  background: transparent;
+  height: auto;
   display: flex;
   align-self: center;
-  padding: 0.75rem;
+  padding: 0;
   justify-content: center;
   align-items: center;
-  border-radius: 1.75rem;
-  font-size: 2.75rem;
+  border-radius: 0;
+  font-size: 1.8rem;
   font-variation-settings: 'wght' 600;
   line-height: 1;
   transition: all 0.2s ease;
-  color: var(--color-gold);
-  gap: 0.5rem;
+  color: var(--color-white);
+  gap: 0.4rem;
 }
 
-.bank.is-increasing {
-  background: rgba(0, 0, 0, 0.4);
+.game .bank-button {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  border-radius: 999px;
+  text-transform: none;
+  letter-spacing: 0.05rem;
+  color: inherit;
+  cursor: pointer;
 }
 
-.bank.is-increasing .number {
+.game .bank-button:focus-visible {
+  outline: 2px solid var(--color-white);
+  outline-offset: 0.2rem;
+}
+
+.game .bank.is-increasing {
+  filter: drop-shadow(0 0 0.6rem rgba(255, 217, 0, 0.4));
+}
+
+.game .bank.is-increasing .number {
   transform: scale(1.1);
 }
 
-.bank .chip {
-  height: 100%;
+.game .bank .chip {
+  height: 2.4rem;
   aspect-ratio: 1;
 }
 
 .times {
   text-align: center;
-  font-size: 2rem;
-  flex: 1;
+  font-size: 1.4rem;
+  flex: 0;
 }
 
 .number {
   min-width: 2ch;
+  color: var(--color-gold);
   text-align: center;
   transition: all 0.2s ease;
   line-height: normal;
+}
+
+.bank-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 16, 30, 0.78);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 5.5rem 1.5rem 2rem;
+  z-index: 20;
+}
+
+.bank-modal {
+  width: min(94vw, 380px);
+  border-radius: 1.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: linear-gradient(180deg, #0c4f7f 0%, #0a3e63 100%);
+  box-shadow: 0 2rem 3.5rem rgba(0, 0, 0, 0.35);
+  color: var(--color-white);
+  padding: 1.4rem;
+}
+
+.bank-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.bank-modal__eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.25rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.bank-modal__title {
+  margin: 0.4rem 0 0;
+  font-size: 1.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2rem;
+}
+
+.bank-modal__close {
+  background: rgba(255, 255, 255, 0.12);
+  border: 0;
+  color: var(--color-white);
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  letter-spacing: 0.2rem;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.bank-modal__message {
+  margin: 0.8rem 0 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.15rem;
+  text-transform: uppercase;
+  color: rgba(255, 217, 0, 0.9);
+}
+
+.bank-modal__balances {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.bank-modal__balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 1rem;
+  background: rgba(6, 25, 42, 0.4);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12rem;
+}
+
+.bank-modal__balance strong {
+  font-size: 0.95rem;
+  color: var(--color-gold);
+}
+
+.bank-modal__note {
+  margin: 1rem 0 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.bank-modal__section {
+  margin-top: 1.2rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.bank-modal__label {
+  margin: 0;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.bank-modal__address {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 1rem;
+  background: rgba(4, 20, 34, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bank-modal__address-label {
+  margin: 0;
+  font-size: 0.6rem;
+  letter-spacing: 0.2rem;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.bank-modal__address-value {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.85);
+  word-break: break-all;
+}
+
+.bank-modal__address button {
+  background: rgba(255, 255, 255, 0.12);
+  border: 0;
+  color: var(--color-white);
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  letter-spacing: 0.18rem;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.bank-modal__address button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bank-modal__deposit {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.bank-modal__deposit label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.bank-modal__deposit input {
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(4, 20, 34, 0.6);
+  color: var(--color-white);
+  padding: 0.5rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.bank-modal__deposit button {
+  justify-self: start;
+  background: rgba(255, 217, 0, 0.95);
+  color: #1b1200;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.2rem;
+  text-transform: uppercase;
+}
+
+.bank-modal__deposit button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bank-modal__hint {
+  margin: 0;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.bank-modal__actions {
+  margin-top: 1.2rem;
+}
+
+.bank-modal__actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--color-off-white);
+  text-transform: uppercase;
+  letter-spacing: 0.2rem;
+  font-size: 0.7rem;
+  text-decoration: none;
 }
 
 .is-spinning {
@@ -986,12 +1220,12 @@ progress::-moz-progress-bar {
 
 @media (max-width: 768px) {
   .game-main {
-    gap: 2.5rem;
-    padding: 4.5rem 0.75rem 1.5rem;
+    gap: 2.8rem;
+    padding: 4rem 0.75rem 1.5rem;
   }
 
   .player-row {
-    gap: 2.5rem;
+    gap: 2.2rem;
     min-height: auto;
   }
 
@@ -1005,34 +1239,37 @@ progress::-moz-progress-bar {
   }
 
   .game button {
-    font-size: 1.2rem;
-    padding: 0.65rem 0.9rem;
-    border-radius: 1.1rem;
+    font-size: 0.85rem;
+    padding: 0.55rem 0.5rem;
+    border-radius: 0.9rem;
+    letter-spacing: 0.06rem;
   }
 
   .player-toolbar {
-    width: 100%;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: min(96vw, 520px);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.4rem;
   }
 
   .player-toolbar .bank {
-    grid-column: 1 / -1;
-    order: 4;
+    grid-column: auto;
+    order: 0;
   }
 
   .player-toolbar button:first-of-type {
-    font-size: 1rem;
+    font-size: 0.8rem;
   }
 
-  .bank {
-    height: 3rem;
-    font-size: 1.6rem;
-    padding: 0.5rem;
-    border-radius: 1.25rem;
+  .game .bank {
+    font-size: 1.2rem;
+  }
+
+  .game .bank .chip {
+    height: 1.8rem;
   }
 
   .times {
-    font-size: 1.4rem;
+    font-size: 1rem;
   }
 
   .card {
@@ -1106,6 +1343,14 @@ progress::-moz-progress-bar {
 
   .title-screen p {
     font-size: 1.1rem;
+  }
+
+  .bank-modal {
+    padding: 1.1rem;
+  }
+
+  .bank-modal__title {
+    font-size: 1.3rem;
   }
 }
 

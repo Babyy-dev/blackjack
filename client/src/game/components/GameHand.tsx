@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { Card, Hand, Player } from '../types'
+import type { Hand, Player } from '../types'
 import { useGameStore } from '../store'
 import HandTotal from './HandTotal'
 import HandBet from './HandBet'
@@ -14,10 +14,7 @@ const GameHand = ({ hand, player }: GameHandProps) => {
   const activeHand = useGameStore((state) => state.activeHand)
   const activePlayer = useGameStore((state) => state.activePlayer)
   const showDealerHoleCard = useGameStore((state) => state.showDealerHoleCard)
-  const players = useGameStore((state) => state.players)
-
-  const dealer = players[players.length - 1]
-  const isDealer = dealer?.hands.includes(hand)
+  const isDealer = player.isDealer
 
   const isActiveHand = activeHand === hand && !player.isDealer
   const isSplitHand = useMemo(
@@ -25,11 +22,7 @@ const GameHand = ({ hand, player }: GameHandProps) => {
     [activeHand, activePlayer, player],
   )
 
-  const isFaceDown = (card: Card) => {
-    if (!isDealer) return false
-    if (hand.cards.indexOf(card) !== 0) return false
-    return !showDealerHoleCard
-  }
+  const isFaceDown = (cardIndex: number) => isDealer && cardIndex === 1 && !showDealerHoleCard
 
   const isSplitCard = (card: Card) => {
     if (player.hands.indexOf(hand) !== 1) return false
@@ -39,11 +32,11 @@ const GameHand = ({ hand, player }: GameHandProps) => {
   return (
     <article className={`hand ${isActiveHand ? 'active-hand' : ''} ${isSplitHand ? 'split-hand' : ''}`}>
       <h2 className="sr-only">{isDealer ? "Dealer's" : 'Your'} hand</h2>
-      {hand.cards.map((card) => (
+      {hand.cards.map((card, index) => (
         <PlayingCard
           key={`${hand.id}-${card.index}`}
           card={card}
-          isFaceDown={isFaceDown(card)}
+          isFaceDown={isFaceDown(index)}
           className={isSplitCard(card) ? 'split-card' : ''}
         />
       ))}
@@ -57,7 +50,7 @@ const GameHand = ({ hand, player }: GameHandProps) => {
           )}
         </div>
       )}
-      <HandTotal hand={hand} />
+      <HandTotal hand={hand} isDealer={isDealer} />
     </article>
   )
 }

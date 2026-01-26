@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 import uuid
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class WalletSummary(BaseModel):
@@ -66,3 +66,15 @@ class WalletWithdrawalPublic(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class WalletTableDepositRequest(BaseModel):
+    amount_tokens: int = Field(ge=1)
+    table_id: str | None = None
+
+
+class WalletTableDepositResponse(BaseModel):
+    wallet: WalletSummary
+    transaction: WalletTransactionPublic
+    table_id: str
+    table_bank: int

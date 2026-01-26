@@ -2,17 +2,14 @@ import { useMemo } from 'react'
 import { useGameStore } from '../store'
 import type { Hand } from '../types'
 
-const HandTotal = ({ hand }: { hand: Hand }) => {
-  const players = useGameStore((state) => state.players)
+const HandTotal = ({ hand, isDealer }: { hand: Hand; isDealer: boolean }) => {
   const showDealerHoleCard = useGameStore((state) => state.showDealerHoleCard)
 
   const total = useMemo(() => {
     if (hand.cards.length < 2) return null
-    const dealer = players[players.length - 1]
-    const isDealer = dealer?.hands.includes(hand)
     if (isDealer && !showDealerHoleCard) return null
     return hand.total
-  }, [hand, players, showDealerHoleCard])
+  }, [hand, isDealer, showDealerHoleCard])
 
   if (!total) return null
 

@@ -67,6 +67,18 @@ export type WalletWithdrawalRequest = {
   address?: string | null
 }
 
+export type WalletTableDepositPayload = {
+  amount_tokens: number
+  table_id?: string | null
+}
+
+export type WalletTableDepositResponse = {
+  wallet: WalletSummary
+  transaction: WalletTransaction
+  table_id: string
+  table_bank: number
+}
+
 export type WalletLinkPayload = {
   eth_address?: string | null
   sol_address?: string | null
@@ -191,6 +203,49 @@ export const requestWithdrawal = async (payload: WalletWithdrawalRequest) => {
   }
   return withAuthRetry((accessToken) =>
     request<WalletWithdrawal>('/api/wallet/withdrawals', {
+      method: 'POST',
+      accessToken,
+      body: JSON.stringify(payload),
+    }),
+  )
+}
+
+export const depositToTable = async (payload: WalletTableDepositPayload) => {
+  const token = useAuthStore.getState().accessToken
+  if (DEMO_MODE && isDemoAccessToken(token)) {
+    const current = getDemoWallet()
+    if (payload.amount_tokens > current.wallet.balance) {
+      throw new Error('Insufficient wallet balance')
+    }
+    const nextBalance = Math.max(0, current.wallet.balance - payload.amount_tokens)
+    const updated: WalletResponse = {
+      ...current,
+      wallet: {
+        ...current.wallet,
+        balance: nextBalance,
+        updated_at: new Date().toISOString(),
+      },
+      transactions: [
+        {
+          id: `demo-tx-${Math.random().toString(36).slice(2, 8)}`,
+          amount: -payload.amount_tokens,
+          kind: 'table_deposit',
+          status: 'completed',
+          created_at: new Date().toISOString(),
+        },
+        ...current.transactions,
+      ],
+    }
+    saveDemoWallet(updated)
+    return {
+      wallet: updated.wallet,
+      transaction: updated.transactions[0],
+      table_id: payload.table_id ?? 'demo-table',
+      table_bank: payload.amount_tokens,
+    } satisfies WalletTableDepositResponse
+  }
+  return withAuthRetry((accessToken) =>
+    request<WalletTableDepositResponse>('/api/wallet/table/deposit', {
       method: 'POST',
       accessToken,
       body: JSON.stringify(payload),
