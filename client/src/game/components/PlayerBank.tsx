@@ -37,7 +37,7 @@ const PlayerBank = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
       setDepositAmount('')
-      const depositTokens = data.transaction.amount_tokens
+      const depositTokens = Math.abs(data.transaction.amount)
       const bank = data.table_bank
       const receipt = `+${depositTokens} TOKEN • Table: ${bank}`
       setDepositReceipt(receipt)

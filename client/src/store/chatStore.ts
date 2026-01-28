@@ -59,16 +59,17 @@ export const useChatStore = create<ChatState>((set, get) => {
     set({ error: payload?.message ?? 'Chat error.' })
   }
 
-  const handleConnect = () => {
-    set({ chatConnected: true, error: null })
-    if (get().socket && get().tableId) {
-      get().socket.emit('chat:sync')
+    const handleConnect = () => {
+      set({ chatConnected: true, error: null })
+      const socket = get().socket
+      if (socket && get().tableId) {
+        socket.emit('chat:sync')
+      }
     }
-  }
 
-  const handleDisconnect = () => {
-    set({ chatConnected: false })
-  }
+    const handleDisconnect = () => {
+      set({ chatConnected: false })
+    }
 
   return {
     socket: null,
