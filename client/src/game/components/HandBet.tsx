@@ -10,11 +10,13 @@ const HandBet = ({ hand }: { hand: Hand }) => {
 
   return (
     <div className={`hand-bet ${isWin ? 'is-win' : ''} ${isLoss ? 'is-loss' : ''}`}>
-      {Array.from({ length: visibleChips }, (_, i) => (
-        <svg className="chip" key={`${hand.id}-${i}`}>
-          <use href="#chip" />
-        </svg>
-      ))}
+      <div className="chip-stack">
+        {Array.from({ length: visibleChips }, (_, i) => (
+          <svg className="chip" key={`${hand.id}-${i}`}>
+            <use href="#chip" />
+          </svg>
+        ))}
+      </div>
       {chipCount > MAX_VISIBLE_CHIPS && (
         <span className="chip-count">x{chipCount}</span>
       )}

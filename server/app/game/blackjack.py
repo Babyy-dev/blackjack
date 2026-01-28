@@ -479,11 +479,11 @@ class BlackjackGame:
         while True:
             total = calculate_total(hand.cards)
             soft = is_soft_total(hand.cards)
-            if total < 17 or (total == 17 and soft):
-                card = self._draw_card()
-                hand.cards.append(card)
-                self._log_event("dealer_hit", "dealer", {"hand_id": hand.hand_id})
-                continue
+        if total < 17:
+            card = self._draw_card()
+            hand.cards.append(card)
+            self._log_event("dealer_hit", "dealer", {"hand_id": hand.hand_id})
+            continue
             break
         self._settle_round()
 

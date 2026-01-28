@@ -24,6 +24,7 @@ const PlayerBank = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [depositAmount, setDepositAmount] = useState('')
+  const [depositReceipt, setDepositReceipt] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['wallet', 'quick'],
@@ -33,9 +34,13 @@ const PlayerBank = () => {
 
   const depositMutation = useMutation({
     mutationFn: depositToTable,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
       setDepositAmount('')
+      const depositTokens = data.transaction.amount_tokens
+      const bank = data.table_bank
+      const receipt = `+${depositTokens} TOKEN • Table: ${bank}`
+      setDepositReceipt(receipt)
       setStatusMessage('Added to table balance.')
       window.setTimeout(() => setStatusMessage(null), 2000)
     },
@@ -70,6 +75,12 @@ const PlayerBank = () => {
   useEffect(() => {
     if (!isOpen) {
       setStatusMessage(null)
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) {
+      setDepositReceipt(null)
     }
   }, [isOpen])
 
@@ -210,6 +221,9 @@ const PlayerBank = () => {
                     >
                       Add to table
                     </button>
+                    {depositReceipt && (
+                      <p className="bank-modal__receipt">{depositReceipt}</p>
+                    )}
                     <p className="bank-modal__hint">Available: {walletBalance} TOKEN</p>
                   </div>
                 )}

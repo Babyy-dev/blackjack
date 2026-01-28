@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import TableChat from '../components/TableChat'
 import AnimatedBackground from '../game/components/AnimatedBackground'
 import GameHand from '../game/components/GameHand'
@@ -39,6 +39,16 @@ const GamePage = () => {
     bindSocket(socket ?? null, currentTableId ?? null)
   }, [bindSocket, socket, currentTableId, isSolo])
 
+  const navigate = useNavigate()
+  const leaveTable = useLobbyStore((state) => state.leaveTable)
+  const currentTableName = useLobbyStore((state) => state.currentTable?.name)
+
+  const handleExit = () => {
+    bindSocket(null, null)
+    leaveTable()
+    navigate('/lobby')
+  }
+
   if (!currentTableId && !isSolo) {
     return (
       <div className="min-h-screen bg-[#02131a] text-white">
@@ -73,6 +83,15 @@ const GamePage = () => {
 
   return (
     <div className="game">
+      <div className="game-hud">
+        <div className="game-hud__left">
+          <p className="game-hud__table-name">{currentTableName ?? 'Table'}</p>
+          <p className="game-hud__subtitle">Live blackjack • MACAJACK</p>
+        </div>
+        <button type="button" className="game-hud__exit" onClick={handleExit}>
+          Exit table
+        </button>
+      </div>
       <SvgSprite />
       <AnimatedBackground />
       <GameHeader />
@@ -82,19 +101,21 @@ const GamePage = () => {
         </div>
       )}
       <main className="game-main" onClickCapture={onClickCapture}>
-        {players.map((player, index) => {
-          const playerKey = player.userId ?? (player.isDealer ? 'dealer' : `player-${index}`)
-          return (
-          <section
-            className={`player-row ${player.isDealer ? 'dealer' : ''}`}
-            key={playerKey}
-          >
-            {player.hands.map((hand) => (
-              <GameHand key={hand.id} hand={hand} player={player} />
-            ))}
-          </section>
-          )
-        })}
+        <div className="table-mat">
+          {players.map((player, index) => {
+            const playerKey = player.userId ?? (player.isDealer ? 'dealer' : `player-${index}`)
+            return (
+            <section
+              className={`player-row ${player.isDealer ? 'dealer' : ''}`}
+              key={playerKey}
+            >
+              {player.hands.map((hand) => (
+                <GameHand key={hand.id} hand={hand} player={player} />
+              ))}
+            </section>
+            )
+          })}
+        </div>
         <PlayerToolbar />
       </main>
       {!isSolo && <TableChat variant="game" />}

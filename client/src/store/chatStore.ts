@@ -29,6 +29,7 @@ type ChatState = {
   messages: ChatMessage[]
   error: string | null
   isOpen: boolean
+  chatConnected: boolean
   bindSocket: (socket: Socket | null, tableId: string | null) => void
   sendMessage: (message: string) => void
   toggleOpen: () => void
@@ -58,21 +59,35 @@ export const useChatStore = create<ChatState>((set, get) => {
     set({ error: payload?.message ?? 'Chat error.' })
   }
 
+  const handleConnect = () => {
+    set({ chatConnected: true, error: null })
+    if (get().socket && get().tableId) {
+      get().socket.emit('chat:sync')
+    }
+  }
+
+  const handleDisconnect = () => {
+    set({ chatConnected: false })
+  }
+
   return {
     socket: null,
     tableId: null,
     messages: [],
     error: null,
     isOpen: false,
+    chatConnected: false,
     bindSocket: (socket, tableId) => {
       if (boundSocket) {
         boundSocket.off('chat:history', handleHistory)
         boundSocket.off('chat:message', handleMessage)
         boundSocket.off('chat:error', handleError)
+        boundSocket.off('connect', handleConnect)
+        boundSocket.off('disconnect', handleDisconnect)
       }
       boundSocket = socket
       if (!socket) {
-        set({ socket: null, tableId, messages: [], error: null })
+        set({ socket: null, tableId, messages: [], error: null, chatConnected: false })
         return
       }
       const previousTableId = get().tableId
@@ -84,13 +99,9 @@ export const useChatStore = create<ChatState>((set, get) => {
       socket.on('chat:history', handleHistory)
       socket.on('chat:message', handleMessage)
       socket.on('chat:error', handleError)
-      if (nextTableId) {
-        if (socket.connected) {
-          socket.emit('chat:sync')
-        } else {
-          socket.once('connect', () => socket.emit('chat:sync'))
-        }
-      }
+      socket.on('connect', handleConnect)
+      socket.on('disconnect', handleDisconnect)
+      set({ chatConnected: socket.connected })
     },
     sendMessage: (message) => {
       const socket = get().socket

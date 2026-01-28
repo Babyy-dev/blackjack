@@ -38,9 +38,10 @@ const TableChat = ({ variant = 'default' }: TableChatProps) => {
     listRef.current.scrollTop = listRef.current.scrollHeight
   }, [messages.length, isOpen])
 
+  const chatConnected = useChatStore((state) => state.chatConnected)
   const canSend = useMemo(
-    () => Boolean(isConnected && socket?.connected && tableId),
-    [isConnected, socket?.connected, tableId],
+    () => Boolean(isConnected && socket?.connected && tableId && chatConnected),
+    [isConnected, socket?.connected, tableId, chatConnected],
   )
 
   const submitMessage = () => {
@@ -60,6 +61,7 @@ const TableChat = ({ variant = 'default' }: TableChatProps) => {
     if (error) clearError()
   }
 
+  const connectionLabel = chatConnected ? 'Chat online' : 'Reconnecting...'
   if (isGame && !isOpen) {
     return (
       <button type="button" className="game-chat__toggle" onClick={toggleOpen}>
@@ -76,6 +78,13 @@ const TableChat = ({ variant = 'default' }: TableChatProps) => {
             <p className="game-chat__eyebrow">Live table</p>
             <h2 className="game-chat__title">Table chat</h2>
           </div>
+          <span
+            className={`game-chat__status ${
+              chatConnected ? 'game-chat__status--online' : 'game-chat__status--pending'
+            }`}
+          >
+            {connectionLabel}
+          </span>
           <button type="button" className="game-chat__close" onClick={toggleOpen}>
             Hide
           </button>
