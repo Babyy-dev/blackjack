@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { gsap } from 'gsap'
 import type { Card, Hand, Player } from '../types'
 import { useGameStore } from '../store'
 import HandTotal from './HandTotal'
@@ -15,6 +16,7 @@ const GameHand = ({ hand, player }: GameHandProps) => {
   const activePlayer = useGameStore((state) => state.activePlayer)
   const showDealerHoleCard = useGameStore((state) => state.showDealerHoleCard)
   const isDealer = player.isDealer
+  const handRef = useRef<HTMLDivElement | null>(null)
 
   const isActiveHand = activeHand === hand && !player.isDealer
   const isSplitHand = useMemo(
@@ -29,8 +31,36 @@ const GameHand = ({ hand, player }: GameHandProps) => {
     return hand.cards.indexOf(card) === 0
   }
 
+  useEffect(() => {
+    const container = handRef.current
+    if (!container) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const cards = container.querySelectorAll('.card')
+    if (!cards.length) return
+    gsap.fromTo(
+      cards,
+      { y: -50, opacity: 0, rotation: -6, scale: 0.94 },
+      { y: 0, opacity: 1, rotation: 0, scale: 1, stagger: 0.04, duration: 0.35, ease: 'power2.out' },
+    )
+  }, [hand.cards.length])
+
+  useEffect(() => {
+    if (!hand.result) return
+    const container = handRef.current
+    if (!container) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    gsap.fromTo(
+      container,
+      { scale: 1 },
+      { scale: 1.06, duration: 0.18, yoyo: true, repeat: 1, ease: 'power1.out' },
+    )
+  }, [hand.result])
+
   return (
-    <article className={`hand ${isActiveHand ? 'active-hand' : ''} ${isSplitHand ? 'split-hand' : ''}`}>
+    <article
+      ref={handRef}
+      className={`hand ${isActiveHand ? 'active-hand' : ''} ${isSplitHand ? 'split-hand' : ''}`}
+    >
       <h2 className="sr-only">{isDealer ? "Dealer's" : 'Your'} hand</h2>
       {hand.cards.map((card, index) => (
         <PlayingCard

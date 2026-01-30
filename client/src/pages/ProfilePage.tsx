@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { apiBaseUrl } from '../api/client'
 import { withAuthRetry } from '../api/authorized'
 import { fetchProfile, updateProfile, uploadAvatar } from '../api/profile'
@@ -87,7 +88,11 @@ const ProfilePage = () => {
 
   return (
     <div className="mx-auto flex w-full flex-col gap-10 px-6 py-12 sm:py-16">
-      <header>
+      <motion.header
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
         <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/80">Vault</p>
         <h1 className="mt-4 break-all text-2xl font-display uppercase tracking-[0.2rem] text-white sm:text-4xl sm:tracking-[0.3rem]">
           {user.email}
@@ -95,10 +100,15 @@ const ProfilePage = () => {
         <p className="mt-2 text-sm text-white/60">
           Update your profile to stand out at the table.
         </p>
-      </header>
+      </motion.header>
 
       <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr]">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.06 }}
+          className="casino-panel rounded-3xl p-5 sm:p-6"
+        >
           <div className="flex flex-col items-center gap-4">
             <div className="h-28 w-28 overflow-hidden rounded-full border border-white/20 bg-[#071219] sm:h-32 sm:w-32">
               {avatarUrl ? (
@@ -109,7 +119,7 @@ const ProfilePage = () => {
                 </div>
               )}
             </div>
-            <label className="cursor-pointer rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.2rem] text-white/70 transition hover:border-white/40">
+            <label className="cursor-pointer rounded-full border border-white/30 px-4 py-2 text-xs uppercase tracking-[0.2rem] text-white/70 transition hover:border-white/60">
               Upload
               <input
                 type="file"
@@ -125,10 +135,13 @@ const ProfilePage = () => {
               <p className="text-xs text-red-200">Avatar upload failed.</p>
             )}
           </div>
-        </div>
+        </motion.div>
 
-        <form
-          className="rounded-3xl border border-white/10 bg-white/5 p-5 text-sm sm:p-6"
+        <motion.form
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.12 }}
+          className="casino-panel rounded-3xl p-5 text-sm sm:p-6"
           onSubmit={(event) => {
             event.preventDefault()
             setMessage(null)
@@ -148,7 +161,7 @@ const ProfilePage = () => {
               required
               minLength={3}
               maxLength={64}
-              className="rounded-2xl border border-white/10 bg-[#071219] px-4 py-3 text-sm text-white"
+              className="rounded-2xl border border-white/10 bg-[#0a1224] px-4 py-3 text-sm text-white outline-none focus:border-amber-300/60"
             />
           </label>
           <label className="mt-5 flex flex-col gap-2 text-xs uppercase tracking-[0.2rem] text-white/60">
@@ -158,17 +171,17 @@ const ProfilePage = () => {
               onChange={(event) => setBio(event.target.value)}
               maxLength={280}
               rows={4}
-              className="rounded-2xl border border-white/10 bg-[#071219] px-4 py-3 text-sm text-white"
+              className="rounded-2xl border border-white/10 bg-[#0a1224] px-4 py-3 text-sm text-white outline-none focus:border-amber-300/60"
             />
           </label>
           <button
             type="submit"
             disabled={updateMutation.isPending}
-            className="mt-6 rounded-full bg-amber-300 px-6 py-3 text-xs font-semibold uppercase tracking-[0.25rem] text-[#1b1200] transition hover:-translate-y-0.5"
+            className="casino-button mt-6 rounded-full px-6 py-3 text-xs font-semibold uppercase tracking-[0.25rem] transition hover:-translate-y-0.5"
           >
             {updateMutation.isPending ? 'Saving...' : 'Save changes'}
           </button>
-        </form>
+        </motion.form>
       </div>
     </div>
   )

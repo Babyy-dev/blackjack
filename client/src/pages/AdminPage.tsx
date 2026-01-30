@@ -392,7 +392,7 @@ const AdminPage = () => {
   ]
 
   return (
-    <div className="mx-auto flex w-full flex-col gap-10 px-6 py-10 sm:py-12">
+    <div className="casino-admin mx-auto flex w-full flex-col gap-10 px-6 py-10 sm:py-12">
       <header>
         <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/70">Admin</p>
         <h1 className="text-3xl font-display uppercase tracking-[0.25rem] text-white sm:text-4xl sm:tracking-[0.3rem]">

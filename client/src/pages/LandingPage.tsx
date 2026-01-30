@@ -1,15 +1,45 @@
+import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { gsap } from 'gsap'
 
 const LandingPage = () => {
+  const chipLayerRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!chipLayerRef.current) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const ctx = gsap.context(() => {
+      const chips = gsap.utils.toArray<HTMLElement>('.casino-chip-orbit')
+      chips.forEach((chip, index) => {
+        gsap.to(chip, {
+          y: index % 2 === 0 ? -18 : 14,
+          x: index % 3 === 0 ? 14 : -12,
+          rotation: index % 2 === 0 ? 12 : -8,
+          duration: 5 + index,
+          repeat: -1,
+          yoyo: true,
+          ease: 'sine.inOut',
+        })
+      })
+    }, chipLayerRef)
+    return () => ctx.revert()
+  }, [])
+
   return (
     <div className="mx-auto flex w-full flex-col gap-12 px-6 py-12 sm:gap-20 sm:py-16">
       <section className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="flex flex-col gap-6">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="flex flex-col gap-6"
+        >
           <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/80">
             Project MACA casino floor
           </p>
           <h1 className="text-3xl font-display uppercase tracking-[0.22rem] text-white sm:text-5xl sm:tracking-[0.35rem] lg:text-6xl">
-            Spin up a private blackjack table with real stakes, real pacing, and a cinematic glow.
+            Spin up a private blackjack table with neon stakes, sync pulses, and a cinematic glow.
           </h1>
           <p className="text-base text-white/70 sm:text-lg">
             MACAJACK pairs a fast single-player engine with secure account vaults and a lobby ready
@@ -19,20 +49,30 @@ const LandingPage = () => {
           <div className="flex flex-wrap gap-4">
             <Link
               to="/lobby"
-              className="rounded-full bg-amber-300 px-6 py-3 text-xs font-semibold uppercase tracking-[0.2rem] text-[#1b1200] shadow-glow transition hover:-translate-y-0.5 hover:bg-amber-200 sm:text-sm sm:tracking-[0.25rem]"
+              className="casino-button rounded-full px-6 py-3 text-xs font-semibold uppercase tracking-[0.2rem] transition hover:-translate-y-0.5 sm:text-sm sm:tracking-[0.25rem]"
             >
               Enter the lobby
             </Link>
             <Link
               to="/auth"
-              className="rounded-full border border-white/20 px-6 py-3 text-xs font-semibold uppercase tracking-[0.2rem] text-white transition hover:border-white/40 sm:text-sm sm:tracking-[0.25rem]"
+              className="rounded-full border border-white/30 px-6 py-3 text-xs font-semibold uppercase tracking-[0.2rem] text-white transition hover:border-white/60 sm:text-sm sm:tracking-[0.25rem]"
             >
               Member login
             </Link>
           </div>
-        </div>
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d1f28]/80 p-6 shadow-xl sm:p-8">
-          <div className="absolute -right-10 -top-14 h-40 w-40 rounded-full bg-amber-300/20 blur-2xl" />
+        </motion.div>
+        <motion.div
+          ref={chipLayerRef}
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
+          className="casino-panel casino-glow relative overflow-hidden rounded-3xl p-6 shadow-xl sm:p-8"
+        >
+          <div className="casino-chip casino-chip-orbit absolute -right-4 -top-6 h-24 w-24 rounded-full opacity-70" />
+          <div className="casino-chip casino-chip-orbit absolute right-10 top-24 h-14 w-14 rounded-full opacity-60" />
+          <div className="casino-chip casino-chip-orbit absolute bottom-10 right-6 h-20 w-20 rounded-full opacity-60" />
+          <div className="casino-chip casino-chip-orbit absolute -left-6 bottom-6 h-28 w-28 rounded-full opacity-40" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.16),_transparent_50%)]" />
           <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white sm:text-2xl sm:tracking-[0.25rem]">
             Tonight's highlights
           </h2>
@@ -50,7 +90,7 @@ const LandingPage = () => {
               <p className="mt-2">Multiplayer tables, chat, and crypto-ready wallets.</p>
             </div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       <section className="grid gap-6 lg:grid-cols-3">
@@ -67,20 +107,24 @@ const LandingPage = () => {
             title: 'Casino ambience',
             copy: 'Purpose-built visuals, custom cards, and the MACAJACK soundscape.',
           },
-        ].map((item) => (
-          <div
+        ].map((item, index) => (
+          <motion.div
             key={item.title}
-            className="rounded-3xl border border-white/10 bg-white/5 p-6 text-white/80"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.6, ease: 'easeOut', delay: index * 0.08 }}
+            className="casino-panel rounded-3xl p-6 text-white/80"
           >
             <h3 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
               {item.title}
             </h3>
             <p className="mt-3 text-sm text-white/60">{item.copy}</p>
-          </div>
+          </motion.div>
         ))}
       </section>
 
-      <section className="grid gap-8 rounded-3xl border border-white/10 bg-[#071a22]/80 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="casino-panel grid gap-8 rounded-3xl p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/70">How it works</p>
           <h2 className="mt-4 text-2xl font-display uppercase tracking-[0.2rem] text-white sm:text-3xl sm:tracking-[0.25rem]">
@@ -117,7 +161,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      <section className="grid gap-6 rounded-3xl border border-amber-300/20 bg-gradient-to-br from-[#0b1f26] via-[#13252f] to-[#0b1f26] p-6 text-white/80 sm:p-8 md:grid-cols-[1.2fr_0.8fr]">
+      <section className="grid gap-6 rounded-3xl border border-amber-300/30 bg-gradient-to-br from-[#0e0b2a] via-[#12112d] to-[#0b1426] p-6 text-white/80 sm:p-8 md:grid-cols-[1.2fr_0.8fr]">
         <div>
           <h2 className="text-2xl font-display uppercase tracking-[0.2rem] text-white sm:text-3xl sm:tracking-[0.25rem]">
             Build your legend

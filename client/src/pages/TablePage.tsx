@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import TableChat from '../components/TableChat'
 import { useGameStore } from '../game/store'
@@ -23,6 +23,7 @@ const TablePage = () => {
   const serverError = useGameStore((state) => state.serverError)
   const autoReadyRef = useRef<string | null>(null)
   const startKeyRef = useRef<string | null>(null)
+  const [copyMessage, setCopyMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (tableId && isConnected) joinTable(tableId)
@@ -78,6 +79,17 @@ const TablePage = () => {
     if (isRoundActive) navigate('/game')
   }, [isRoundActive, navigate])
 
+  const copyInvite = async () => {
+    if (!displayCode || displayCode === '--') return
+    try {
+      await navigator.clipboard.writeText(displayCode)
+      setCopyMessage('Invite code copied.')
+    } catch {
+      setCopyMessage('Copy failed. Please select and copy manually.')
+    }
+    window.setTimeout(() => setCopyMessage(null), 2200)
+  }
+
   return (
     <div className="mx-auto flex w-full flex-col gap-8 px-6 py-10 sm:py-12">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -89,6 +101,16 @@ const TablePage = () => {
           <p className="mt-2 break-all text-[0.6rem] uppercase tracking-[0.2rem] text-white/50 sm:text-xs sm:tracking-[0.25rem]">
             {codeLabel}: {displayCode} {currentTable?.isPrivate ? '(private)' : ''}
           </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-[0.6rem] uppercase tracking-[0.2rem]">
+            <button
+              type="button"
+              onClick={() => void copyInvite()}
+              className="rounded-full border border-amber-300/60 px-3 py-1 text-amber-200 transition hover:border-amber-300 hover:text-amber-100"
+            >
+              Copy invite
+            </button>
+            {copyMessage && <span className="text-emerald-200">{copyMessage}</span>}
+          </div>
         </div>
         <div className="flex flex-wrap gap-3">
           <Link

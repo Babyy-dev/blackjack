@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 
 const AuthPage = () => {
@@ -44,7 +45,12 @@ const AuthPage = () => {
 
   return (
     <div className="mx-auto flex w-full flex-col gap-8 px-6 py-12 sm:gap-10 sm:py-16">
-      <header className="text-center">
+      <motion.header
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="text-center"
+      >
         <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/80">Member lounge</p>
         <h1 className="mt-4 text-3xl font-display uppercase tracking-[0.25rem] text-white sm:text-5xl sm:tracking-[0.35rem]">
           {mode === 'login' ? 'Return to the table' : 'Claim your seat'}
@@ -54,17 +60,22 @@ const AuthPage = () => {
             ? 'Log in to access your vault and resume your streak.'
             : 'Create a new account to track stats and unlock the high-limit lounge.'}
         </p>
-      </header>
+      </motion.header>
 
-      <div className="mx-auto w-full max-w-xl rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.08 }}
+        className="casino-panel mx-auto w-full max-w-xl rounded-3xl p-6 sm:p-8"
+      >
         <div className="flex justify-center gap-4">
           <button
             type="button"
             onClick={() => setMode('login')}
             className={`rounded-full px-4 py-2 text-[0.6rem] uppercase tracking-[0.18rem] transition sm:text-xs sm:tracking-[0.2rem] ${
               mode === 'login'
-                ? 'bg-amber-300 text-[#1b1200]'
-                : 'border border-white/20 text-white/70 hover:text-white'
+                ? 'casino-button'
+                : 'border border-white/30 text-white/70 hover:border-white/60 hover:text-white'
             }`}
           >
             Login
@@ -74,8 +85,8 @@ const AuthPage = () => {
             onClick={() => setMode('register')}
             className={`rounded-full px-4 py-2 text-[0.6rem] uppercase tracking-[0.18rem] transition sm:text-xs sm:tracking-[0.2rem] ${
               mode === 'register'
-                ? 'bg-amber-300 text-[#1b1200]'
-                : 'border border-white/20 text-white/70 hover:text-white'
+                ? 'casino-button'
+                : 'border border-white/30 text-white/70 hover:border-white/60 hover:text-white'
             }`}
           >
             Register
@@ -95,7 +106,7 @@ const AuthPage = () => {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
-              className="rounded-2xl border border-white/10 bg-[#071219] px-4 py-3 text-sm text-white placeholder:text-white/40"
+              className="rounded-2xl border border-white/10 bg-[#0a1224] px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-amber-300/60"
               placeholder="you@casino.com"
             />
           </label>
@@ -107,7 +118,7 @@ const AuthPage = () => {
               onChange={(event) => setPassword(event.target.value)}
               required
               minLength={8}
-              className="rounded-2xl border border-white/10 bg-[#071219] px-4 py-3 text-sm text-white placeholder:text-white/40"
+              className="rounded-2xl border border-white/10 bg-[#0a1224] px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-amber-300/60"
               placeholder="********"
             />
           </label>
@@ -122,7 +133,7 @@ const AuthPage = () => {
                   required
                   minLength={3}
                   maxLength={64}
-                  className="rounded-2xl border border-white/10 bg-[#071219] px-4 py-3 text-sm text-white placeholder:text-white/40"
+                  className="rounded-2xl border border-white/10 bg-[#0a1224] px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-amber-300/60"
                   placeholder="LuckyJack"
                 />
               </label>
@@ -133,7 +144,7 @@ const AuthPage = () => {
                   onChange={(event) => setBio(event.target.value)}
                   maxLength={280}
                   rows={3}
-                  className="rounded-2xl border border-white/10 bg-[#071219] px-4 py-3 text-sm text-white placeholder:text-white/40"
+                  className="rounded-2xl border border-white/10 bg-[#0a1224] px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-amber-300/60"
                   placeholder="Tell the house about your style."
                 />
               </label>
@@ -142,12 +153,12 @@ const AuthPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 rounded-full bg-amber-300 px-6 py-3 text-xs font-semibold uppercase tracking-[0.25rem] text-[#1b1200] transition hover:-translate-y-0.5"
+            className="casino-button mt-2 rounded-full px-6 py-3 text-xs font-semibold uppercase tracking-[0.25rem] transition hover:-translate-y-0.5"
           >
             {loading ? 'Processing...' : mode === 'login' ? 'Enter vault' : 'Create account'}
           </button>
         </form>
-      </div>
+      </motion.div>
     </div>
   )
 }

@@ -6,10 +6,11 @@ const SiteLayout = () => {
   const logout = useAuthStore((state) => state.logout)
 
   return (
-    <div className="relative min-h-screen bg-[#02131a] text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,217,0,0.18),_transparent_55%)]" />
-      <div className="pointer-events-none absolute -left-40 top-32 h-72 w-72 rounded-full bg-[#0f2f3a]/70 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-80 w-80 rounded-full bg-[#0c4a56]/50 blur-[110px]" />
+    <div className="casino-shell relative min-h-screen text-white">
+      <div className="pointer-events-none absolute inset-0 casino-grid" />
+      <div className="pointer-events-none absolute -left-40 top-20 h-72 w-72 rounded-full casino-aurora opacity-60" />
+      <div className="pointer-events-none absolute right-[-120px] top-32 h-80 w-80 rounded-full bg-[radial-gradient(circle,_rgba(255,124,64,0.5),_transparent_65%)] blur-[110px]" />
+      <div className="pointer-events-none absolute bottom-0 left-10 h-96 w-96 rounded-full bg-[radial-gradient(circle,_rgba(73,225,255,0.4),_transparent_65%)] blur-[120px]" />
 
       <header className="sticky top-0 z-20 border-b border-white/10 bg-[#02131a]/80 backdrop-blur">
         <div className="site-shell flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">

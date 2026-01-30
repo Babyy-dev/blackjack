@@ -103,6 +103,9 @@ export const useChatStore = create<ChatState>((set, get) => {
       socket.on('connect', handleConnect)
       socket.on('disconnect', handleDisconnect)
       set({ chatConnected: socket.connected })
+      if (socket.connected && nextTableId) {
+        socket.emit('chat:sync')
+      }
     },
     sendMessage: (message) => {
       const socket = get().socket

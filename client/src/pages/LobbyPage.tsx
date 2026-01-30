@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useLobbyStore } from '../store/lobbyStore'
 
 const LobbyPage = () => {
@@ -61,7 +62,12 @@ const LobbyPage = () => {
 
   return (
     <div className="mx-auto flex w-full flex-col gap-10 px-6 py-12 sm:py-14">
-      <header className="flex flex-wrap items-center justify-between gap-4">
+      <motion.header
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="flex flex-wrap items-center justify-between gap-4"
+      >
         <div>
           <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/70">
             Multiplayer lobby
@@ -71,10 +77,10 @@ const LobbyPage = () => {
           </h1>
         </div>
         <div className="flex items-center gap-3 text-[0.6rem] uppercase tracking-[0.18rem] text-white/60 sm:text-xs sm:tracking-[0.2rem]">
-          <span className="h-2 w-2 rounded-full bg-amber-300" />
+          <span className="casino-spark h-2 w-2 rounded-full bg-amber-300" />
           <span>{connectionLabel}</span>
         </div>
-      </header>
+      </motion.header>
 
       {error && (
         <div className="rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
@@ -83,7 +89,12 @@ const LobbyPage = () => {
       )}
 
       <div className="grid gap-8 lg:grid-cols-[1.05fr_1.2fr]">
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.05 }}
+          className="casino-panel rounded-3xl p-5 sm:p-6"
+        >
           <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
             Create a table
           </h2>
@@ -325,9 +336,14 @@ const LobbyPage = () => {
               </button>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.12 }}
+          className="casino-panel rounded-3xl p-5 sm:p-6"
+        >
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-display uppercase tracking-[0.2rem] text-white sm:text-xl">
               Available tables
@@ -361,8 +377,8 @@ const LobbyPage = () => {
                 </div>
                 <button
                   onClick={() => {
+                    setPendingNavigation(true)
                     joinTable(table.id)
-                    navigate(`/table/${table.id}`)
                   }}
                   disabled={!isConnected}
                   className="rounded-full border border-white/20 px-4 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.25rem] text-white transition hover:border-amber-300/70 hover:text-amber-200 disabled:cursor-not-allowed disabled:border-white/10 disabled:text-white/40"
@@ -372,7 +388,7 @@ const LobbyPage = () => {
               </div>
             ))}
           </div>
-        </section>
+        </motion.section>
       </div>
     </div>
   )

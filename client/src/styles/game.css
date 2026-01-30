@@ -2,10 +2,10 @@
   position: relative;
   height: 100vh;
   overflow: hidden;
-  background-color: var(--color-dark-cyan);
+  background: radial-gradient(circle at 20% 0%, rgba(255, 61, 142, 0.2), transparent 40%),
+    radial-gradient(circle at 80% 10%, rgba(73, 225, 255, 0.2), transparent 45%),
+    linear-gradient(140deg, #05040c 0%, #0a1324 55%, #090616 100%);
   font-family: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
-  background-image: radial-gradient(circle at 20% -10%, rgba(255, 255, 255, 0.12), transparent 35%),
-    radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.08), transparent 40%);
 }
 
 .game * {
@@ -26,11 +26,12 @@
 .table-mat {
   width: min(95vw, 660px);
   min-height: clamp(360px, 48vh, 520px);
-  background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.08), transparent 45%),
-    radial-gradient(circle at 80% 0%, rgba(255, 255, 255, 0.03), transparent 50%), rgba(8, 18, 35, 0.8);
+  background: radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.08), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(255, 61, 142, 0.12), transparent 50%),
+    linear-gradient(180deg, rgba(10, 20, 44, 0.9), rgba(6, 11, 24, 0.85));
   border-radius: 2.4rem;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 2rem 3rem rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(140, 75, 255, 0.3);
+  box-shadow: 0 2rem 3rem rgba(0, 0, 0, 0.6), 0 0 25px rgba(140, 75, 255, 0.2);
   display: flex;
   flex-direction: column;
   justify-content: center;

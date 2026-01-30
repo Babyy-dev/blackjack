@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { getWallet, getWithdrawals, linkWallet, requestWithdrawal } from '../api/wallet'
 
@@ -108,7 +109,11 @@ const WalletPage = () => {
 
   return (
     <div className="mx-auto flex w-full flex-col gap-8 px-6 py-10 sm:py-12">
-      <header>
+      <motion.header
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
         <p className="text-xs uppercase tracking-[0.3rem] text-amber-300/70">Wallet</p>
         <h1 className="text-2xl font-display uppercase tracking-[0.25rem] text-white sm:text-3xl sm:tracking-[0.3rem]">
           Token vault
@@ -116,10 +121,15 @@ const WalletPage = () => {
         <p className="mt-2 text-sm text-white/60">
           Manage deposits, withdrawals, and your in-game token balance.
         </p>
-      </header>
+      </motion.header>
 
       <section className="grid gap-6 md:grid-cols-3">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.05 }}
+          className="casino-panel rounded-3xl p-5 sm:p-6"
+        >
           <p className="text-xs uppercase tracking-[0.2rem] text-white/60">Balance</p>
           <p className="mt-4 text-2xl font-semibold text-white sm:text-3xl">
             {isLoading ? '...' : data?.wallet.balance ?? 0}
@@ -127,8 +137,13 @@ const WalletPage = () => {
           <p className="mt-2 text-xs uppercase tracking-[0.2rem] text-amber-200/80">
             {data?.wallet.currency ?? 'TOKEN'}
           </p>
-        </div>
-        <div className="rounded-3xl border border-white/10 bg-[#08161c] p-5 sm:p-6">
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+          className="casino-panel rounded-3xl p-5 sm:p-6"
+        >
           <p className="text-xs uppercase tracking-[0.2rem] text-white/60">Deposit</p>
           <p className="mt-3 text-sm text-white/70">
             Send crypto to your personal deposit address. Tokens are credited after
@@ -148,8 +163,13 @@ const WalletPage = () => {
               </p>
             </div>
           </div>
-        </div>
-        <div className="rounded-3xl border border-white/10 bg-[#08161c] p-5 sm:p-6">
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.15 }}
+          className="casino-panel rounded-3xl p-5 sm:p-6"
+        >
           <p className="text-xs uppercase tracking-[0.2rem] text-white/60">Withdraw</p>
           <p className="mt-3 text-sm text-white/70">
             Submit a withdrawal request to your linked wallet.
@@ -203,11 +223,16 @@ const WalletPage = () => {
               Request withdrawal
             </button>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.12 }}
+          className="casino-panel rounded-3xl p-5 sm:p-6"
+        >
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
               Wallet connections
@@ -250,9 +275,14 @@ const WalletPage = () => {
               </button>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.16 }}
+          className="casino-panel rounded-3xl p-5 sm:p-6"
+        >
           <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
             Diamond shop
           </h2>
@@ -262,17 +292,22 @@ const WalletPage = () => {
           </p>
           <button
             disabled={!canPurchase}
-            className="mt-6 w-full rounded-full bg-amber-300 px-6 py-3 text-xs font-semibold uppercase tracking-[0.25rem] text-[#1b1200] transition hover:-translate-y-0.5 hover:bg-amber-200 disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/40 disabled:hover:translate-y-0"
+            className="casino-button mt-6 w-full rounded-full px-6 py-3 text-xs font-semibold uppercase tracking-[0.25rem] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/40 disabled:hover:translate-y-0"
           >
             {canPurchase ? 'Buy diamonds' : 'Connect a wallet to buy'}
           </button>
           <p className="mt-3 text-xs uppercase tracking-[0.2rem] text-white/40">
             Transactions are queued until on-chain verification is enabled.
           </p>
-        </div>
+        </motion.div>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.22 }}
+        className="casino-panel rounded-3xl p-5 sm:p-6"
+      >
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-display uppercase tracking-[0.2rem] text-white">
             Recent activity
@@ -344,7 +379,7 @@ const WalletPage = () => {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
     </div>
   )
 }
