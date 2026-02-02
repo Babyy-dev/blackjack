@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Socket } from 'socket.io-client'
-import { CardSuits, generateShoe, shuffle } from './cards'
+import { generateShoe, shuffle } from './cards'
 import type { Card, GameState, HandResult, Player } from './types'
 import { Hand } from './types'
 import { playSound, Sounds } from './sound'
