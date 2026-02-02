@@ -824,8 +824,8 @@
   line-height: 1;
 }
 
-.card[data-suit='♥'],
-.card[data-suit='♦'] {
+.card[data-suit='hearts'],
+.card[data-suit='diamonds'] {
   color: var(--color-red);
 }
 

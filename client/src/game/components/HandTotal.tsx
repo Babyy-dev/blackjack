@@ -6,12 +6,12 @@ const HandTotal = ({ hand, isDealer }: { hand: Hand; isDealer: boolean }) => {
   const showDealerHoleCard = useGameStore((state) => state.showDealerHoleCard)
 
   const total = useMemo(() => {
-    if (hand.cards.length < 2) return null
+    if (hand.cards.length === 0) return null
     if (isDealer && !showDealerHoleCard) return null
     return hand.total
   }, [hand, isDealer, showDealerHoleCard])
 
-  if (!total) return null
+  if (total === null || Number.isNaN(total)) return null
 
   return (
     <p className={`hand-total ${total > 21 ? 'bust' : ''} ${total === 21 ? 'twenty-one' : ''}`}>

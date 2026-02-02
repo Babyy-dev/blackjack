@@ -47,11 +47,25 @@ type ServerGameState = {
 }
 
 const SERVER_SUIT_MAP: Record<string, Card['suit']> = {
-  spades: CardSuits[0],
-  diamonds: CardSuits[1],
-  clubs: CardSuits[2],
-  hearts: CardSuits[3],
+  spades: 'spades',
+  diamonds: 'diamonds',
+  clubs: 'clubs',
+  hearts: 'hearts',
+  '\u2660': 'spades',
+  '\u2666': 'diamonds',
+  '\u2663': 'clubs',
+  '\u2665': 'hearts',
+  'â™ ': 'spades',
+  'â™¦': 'diamonds',
+  'â™£': 'clubs',
+  'â™¥': 'hearts',
 }
+
+const normalizeSuit = (value: unknown): Card['suit'] =>
+  SERVER_SUIT_MAP[String(value ?? '').toLowerCase()] ?? 'spades'
+
+const normalizeRank = (value: unknown): Card['rank'] =>
+  (String(value ?? '').toUpperCase() as Card['rank'])
 
 type GameStore = GameState & {
   socket: Socket | null
@@ -88,7 +102,8 @@ export const useGameStore = create<GameStore>((set, get) => {
           ...hand,
           cards: hand.cards.map((card) => ({
             ...card,
-            suit: SERVER_SUIT_MAP[card.suit] ?? card.suit,
+            rank: normalizeRank(card.rank),
+            suit: normalizeSuit(card.suit),
           })),
         }),
       ),

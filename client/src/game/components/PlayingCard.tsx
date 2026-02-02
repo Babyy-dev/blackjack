@@ -9,10 +9,10 @@ const FACE_NAMES: Record<string, string> = {
 }
 
 const SUIT_NAMES: Record<string, string> = {
-  '♠': 'Spades',
-  '♦': 'Diamonds',
-  '♣': 'Clubs',
-  '♥': 'Hearts',
+  spades: 'Spades',
+  diamonds: 'Diamonds',
+  clubs: 'Clubs',
+  hearts: 'Hearts',
 }
 
 type PlayingCardProps = {
@@ -23,21 +23,24 @@ type PlayingCardProps = {
 
 const PlayingCard = ({ card, isFaceDown = false, className }: PlayingCardProps) => {
   const symbolCount = useMemo(() => {
-    if (['J', 'Q', 'K', 'A', 'a'].includes(card.rank)) return 1
-    return Number(card.rank)
+    const rankValue = String(card.rank)
+    if (['J', 'Q', 'K', 'A', 'a'].includes(rankValue)) return 1
+    const numeric = Number(rankValue)
+    return Number.isFinite(numeric) ? numeric : 1
   }, [card.rank])
 
   const getCardLabel = () => {
     if (isFaceDown) return 'Face-down card'
-    const rank = FACE_NAMES[card.rank] ?? card.rank
-    const suit = SUIT_NAMES[card.suit]
+    const rankKey = String(card.rank)
+    const rank = FACE_NAMES[rankKey] ?? rankKey
+    const suit = SUIT_NAMES[card.suit] ?? card.suit
     return `${rank} of ${suit}`
   }
 
   return (
     <div
       className={`card deal ${isFaceDown ? 'face-down' : ''} ${className ?? ''}`}
-      data-rank={isFaceDown ? undefined : card.rank.toLowerCase()}
+      data-rank={isFaceDown ? undefined : String(card.rank).toLowerCase()}
       data-suit={isFaceDown ? undefined : card.suit}
       role="img"
       aria-label={getCardLabel()}
@@ -46,7 +49,7 @@ const PlayingCard = ({ card, isFaceDown = false, className }: PlayingCardProps) 
         {!isFaceDown && (
           <>
             <div className="card-corner">
-              <span className="card-rank">{card.rank.toUpperCase()}</span>
+              <span className="card-rank">{String(card.rank).toUpperCase()}</span>
               <svg>
                 <use href={`#suit-${card.suit}`} />
               </svg>
@@ -59,7 +62,7 @@ const PlayingCard = ({ card, isFaceDown = false, className }: PlayingCardProps) 
               ))}
             </div>
             <div className="card-corner">
-              <span className="card-rank">{card.rank.toUpperCase()}</span>
+              <span className="card-rank">{String(card.rank).toUpperCase()}</span>
               <svg className="card-suit">
                 <use href={`#suit-${card.suit}`} />
               </svg>
@@ -77,3 +80,4 @@ const PlayingCard = ({ card, isFaceDown = false, className }: PlayingCardProps) 
 }
 
 export default PlayingCard
+

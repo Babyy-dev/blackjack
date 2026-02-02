@@ -53,7 +53,11 @@ export class Hand {
     let total = 0
     let addedHighAce = false
     for (const card of this.cards) {
-      total += CardValue[card.rank as CardRank]
+      const value = CardValue[card.rank as CardRank]
+      if (value === undefined) {
+        continue
+      }
+      total += value
       if (card.rank === 'A' && !addedHighAce) {
         total += 10
         addedHighAce = true

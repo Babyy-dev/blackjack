@@ -16,7 +16,7 @@ export const CardValue = {
   K: 10,
 } as const
 
-export const CardSuits = ['♠', '♦', '♣', '♥'] as const
+export const CardSuits = ['spades', 'diamonds', 'clubs', 'hearts'] as const
 
 export function generateShoe(numberOfDecks: number) {
   const shoe: Card[] = []
