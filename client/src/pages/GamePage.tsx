@@ -81,6 +81,11 @@ const GamePage = () => {
     }
   }
 
+  const orderedPlayers = useMemo(
+    () => [...players].sort((a, b) => Number(b.isDealer) - Number(a.isDealer)),
+    [players],
+  )
+
   return (
     <div className="game">
       <div className="game-hud">
@@ -102,7 +107,7 @@ const GamePage = () => {
       )}
       <main className="game-main" onClickCapture={onClickCapture}>
         <div className="table-mat">
-          {players.map((player, index) => {
+          {orderedPlayers.map((player, index) => {
             const playerKey = player.userId ?? (player.isDealer ? 'dealer' : `player-${index}`)
             return (
             <section

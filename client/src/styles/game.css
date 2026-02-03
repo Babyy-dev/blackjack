@@ -822,6 +822,7 @@
   height: 11.2rem;
   transition: all 0.2s ease;
   line-height: 1;
+  color: var(--color-black);
 }
 
 .card[data-suit='hearts'],

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useGameStore } from '../store'
 
 const TitleScreen = () => {
@@ -8,6 +8,7 @@ const TitleScreen = () => {
   const soundLoadProgress = useGameStore((state) => state.soundLoadProgress)
   const serverMode = useGameStore((state) => state.serverMode)
   const status = useGameStore((state) => state.status)
+  const players = useGameStore((state) => state.players)
 
   const [showTitleScreen, setShowTitleScreen] = useState(true)
 
@@ -22,9 +23,15 @@ const TitleScreen = () => {
     }, 500)
   }
 
+  const hasAnyCards = useMemo(
+    () => players.some((player) => player.hands.some((hand) => hand.cards.length > 0)),
+    [players],
+  )
   const isRoundActive =
     serverMode && status ? !['waiting', 'round_end'].includes(status) : false
-  const visible = serverMode ? !isRoundActive : showTitleScreen || isGameOver
+  const visible = serverMode
+    ? !isRoundActive && !hasAnyCards
+    : showTitleScreen || isGameOver
 
   return (
     <section className={`title-screen ${visible ? '' : 'is-hidden'}`}>
