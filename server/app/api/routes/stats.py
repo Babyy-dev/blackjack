@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import deps
 from app.db.models import Profile, User
-from app.schemas.user import User as UserSchema
 
 router = APIRouter()
 
