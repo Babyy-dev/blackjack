@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.crypto.addresses import derive_eth_address, derive_sol_address
+from app.crypto.addresses import bip_utils_available, derive_eth_address, derive_sol_address
 from app.crypto.pricing import tokens_from_base
 from app.core.deps import get_current_user, get_db
 from app.db.models import (
@@ -52,6 +52,8 @@ def _get_next_derivation_index(db: Session, chain: str) -> int:
 
 
 def ensure_deposit_address(db: Session, user: User, wallet: Wallet, chain: str) -> None:
+    if not bip_utils_available():
+        return
     existing_address = (
         wallet.eth_deposit_address if chain == "ETH" else wallet.sol_deposit_address
     )

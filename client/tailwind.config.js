@@ -23,6 +23,15 @@ export default {
       backgroundImage: {
         'casino-radial': 'radial-gradient(circle at top, rgba(255,217,0,0.15), transparent 55%)',
       },
+      keyframes: {
+        ticker: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        }
+      },
+      animation: {
+        ticker: 'ticker 20s linear infinite',
+      },
     },
   },
   plugins: [],

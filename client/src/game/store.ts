@@ -35,6 +35,7 @@ type ServerPlayerPayload = {
 type ServerGameState = {
   tableId: string
   status: string
+  roundId: string | null
   minBet: number
   maxBet: number
   cardsPlayed: number
@@ -42,7 +43,9 @@ type ServerGameState = {
   showDealerHoleCard: boolean
   activePlayerId: string | null
   activeHandId: string | null
+  turnToken: number
   turnEndsAt: string | null
+  serverTime?: string
   players: ServerPlayerPayload[]
 }
 
@@ -72,6 +75,7 @@ type GameStore = GameState & {
   serverMode: boolean
   serverError: string | null
   tableId: string | null
+  isActionPending: boolean
   resetBank: () => void
   toggleMuted: () => void
   setSoundLoadProgress: (value: number) => void
@@ -89,8 +93,17 @@ const sleep = (ms: number = 900) => new Promise((resolve) => setTimeout(resolve,
 export const useGameStore = create<GameStore>((set, get) => {
   const syncPlayers = () => set((state) => ({ players: [...state.players] }))
   let boundSocket: Socket | null = null
+  const handleGameConnect = () => {
+    const socket = get().socket
+    if (socket?.connected) socket.emit('game:sync')
+  }
+  const handleGameDisconnect = () => {
+    set({ serverError: 'Disconnected from game server.' })
+  }
 
   const applyServerState = (payload: ServerGameState) => {
+    const lastToken = get().lastTurnToken ?? -1
+    if (payload.turnToken < lastToken) return
     const players = payload.players.map((player) => ({
       userId: player.userId,
       displayName: player.displayName,
@@ -131,21 +144,26 @@ export const useGameStore = create<GameStore>((set, get) => {
       showDealerHoleCard: payload.showDealerHoleCard,
       isDealing,
       status: payload.status,
+      roundId: payload.roundId ?? null,
+      lastTurnToken: payload.turnToken,
       minBet: payload.minBet,
       maxBet: payload.maxBet,
       turnEndsAt: payload.turnEndsAt,
       tableId: payload.tableId,
       isGameOver,
+      isActionPending: false,
     })
   }
 
   const handleGameState = (payload: ServerGameState | null) => {
     if (!payload) return
     applyServerState(payload)
+    set({ isActionPending: false })
   }
 
   const handleGameError = (payload: { message?: string } | null) => {
     set({ serverError: payload?.message ?? 'Game error' })
+    set({ isActionPending: false })
     window.setTimeout(() => set({ serverError: null }), 4000)
   }
 
@@ -391,10 +409,13 @@ export const useGameStore = create<GameStore>((set, get) => {
     isGameOver: false,
     isMuted: typeof window !== 'undefined' && localStorage.getItem('isMuted') === 'true',
     soundLoadProgress: 0,
+    roundId: null,
+    lastTurnToken: 0,
     socket: null,
     serverMode: false,
     serverError: null,
     tableId: null,
+    isActionPending: false,
     resetBank: () => {
       if (get().serverMode) return
       get().players.forEach((player) => {
@@ -414,24 +435,27 @@ export const useGameStore = create<GameStore>((set, get) => {
       if (boundSocket) {
         boundSocket.off('game:state', handleGameState)
         boundSocket.off('game:error', handleGameError)
-        boundSocket.off('disconnect')
+        boundSocket.off('connect', handleGameConnect)
+        boundSocket.off('disconnect', handleGameDisconnect)
       }
       boundSocket = socket
       if (!socket) {
-        set({ socket: null, serverMode: false, tableId: null })
+        set({
+          socket: null,
+          serverMode: false,
+          tableId: null,
+          isActionPending: false,
+          lastTurnToken: 0,
+          roundId: null,
+        })
         return
       }
-      set({ socket, serverMode: true, tableId, serverError: null })
+      set({ socket, serverMode: true, tableId, serverError: null, isActionPending: false })
       socket.on('game:state', handleGameState)
       socket.on('game:error', handleGameError)
-      socket.on('disconnect', () => {
-        set({ serverError: 'Disconnected from game server.' })
-      })
-      if (socket.connected) {
-        socket.emit('game:sync')
-      } else {
-        socket.once('connect', () => socket.emit('game:sync'))
-      }
+      socket.on('connect', handleGameConnect)
+      socket.on('disconnect', handleGameDisconnect)
+      handleGameConnect()
     },
     clearServerError: () => set({ serverError: null }),
     playRound: async () => {
@@ -454,7 +478,13 @@ export const useGameStore = create<GameStore>((set, get) => {
     hit: async () => {
       if (get().serverMode) {
         const socket = get().socket
-        if (socket?.connected) socket.emit('game:action', { action: 'hit' })
+        if (!socket?.connected || get().isActionPending) return
+        set({ isActionPending: true })
+        socket.emit('game:action', {
+          action: 'hit',
+          turnToken: get().lastTurnToken,
+          roundId: get().roundId,
+        })
         return
       }
       set({ isDealing: true })
@@ -473,7 +503,13 @@ export const useGameStore = create<GameStore>((set, get) => {
     split: async () => {
       if (get().serverMode) {
         const socket = get().socket
-        if (socket?.connected) socket.emit('game:action', { action: 'split' })
+        if (!socket?.connected || get().isActionPending) return
+        set({ isActionPending: true })
+        socket.emit('game:action', {
+          action: 'split',
+          turnToken: get().lastTurnToken,
+          roundId: get().roundId,
+        })
         return
       }
       const { activeHand, activePlayer } = get()
@@ -499,7 +535,13 @@ export const useGameStore = create<GameStore>((set, get) => {
     doubleDown: async () => {
       if (get().serverMode) {
         const socket = get().socket
-        if (socket?.connected) socket.emit('game:action', { action: 'double' })
+        if (!socket?.connected || get().isActionPending) return
+        set({ isActionPending: true })
+        socket.emit('game:action', {
+          action: 'double',
+          turnToken: get().lastTurnToken,
+          roundId: get().roundId,
+        })
         return
       }
       const { activeHand, activePlayer } = get()
@@ -516,7 +558,13 @@ export const useGameStore = create<GameStore>((set, get) => {
     endHand: async () => {
       if (get().serverMode) {
         const socket = get().socket
-        if (socket?.connected) socket.emit('game:action', { action: 'stand' })
+        if (!socket?.connected || get().isActionPending) return
+        set({ isActionPending: true })
+        socket.emit('game:action', {
+          action: 'stand',
+          turnToken: get().lastTurnToken,
+          roundId: get().roundId,
+        })
         return
       }
       const { activePlayer } = get()

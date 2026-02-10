@@ -1,85 +1,12 @@
 from __future__ import annotations
-
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import secrets
 import uuid
-from typing import Literal
+from typing import Optional, Dict, List, Set, Tuple
 
-
-RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
-SUITS = ["spades", "hearts", "diamonds", "clubs"]
-CARD_VALUES = {
-    "A": 11,
-    "2": 2,
-    "3": 3,
-    "4": 4,
-    "5": 5,
-    "6": 6,
-    "7": 7,
-    "8": 8,
-    "9": 9,
-    "10": 10,
-    "J": 10,
-    "Q": 10,
-    "K": 10,
-}
-
-HandStatus = Literal["waiting", "playing", "stand", "bust", "blackjack"]
-HandResult = Literal["win", "lose", "push", "blackjack", "bust"]
-
-
-@dataclass
-class Card:
-    rank: str
-    suit: str
-    index: int
-
-
-@dataclass
-class HandState:
-    hand_id: str = field(default_factory=lambda: uuid.uuid4().hex)
-    cards: list[Card] = field(default_factory=list)
-    bet: int = 0
-    status: HandStatus = "waiting"
-    result: HandResult | None = None
-    is_split: bool = False
-    is_doubled: bool = False
-
-
-@dataclass
-class SeatState:
-    user_id: str
-    display_name: str
-    bank: int
-    hands: list[HandState] = field(default_factory=list)
-    active_hand_index: int = 0
-
-
-def build_shoe(decks: int) -> list[Card]:
-    cards: list[Card] = []
-    index = 0
-    for _ in range(decks):
-        for suit in SUITS:
-            for rank in RANKS:
-                cards.append(Card(rank=rank, suit=suit, index=index))
-                index += 1
-    return cards
-
-
-def calculate_total(cards: list[Card]) -> int:
-    total = sum(CARD_VALUES[card.rank] for card in cards)
-    aces = sum(1 for card in cards if card.rank == "A")
-    while total > 21 and aces:
-        total -= 10
-        aces -= 1
-    return total
-
-
-def is_soft_total(cards: list[Card]) -> bool:
-    total = sum(CARD_VALUES[card.rank] for card in cards)
-    return any(card.rank == "A" for card in cards) and total <= 21
-
+from app.game.constants import RANKS, SUITS
+from app.game.card import Card, build_shoe
+from app.game.hand import HandState, SeatState, calculate_total, is_soft_total
 
 class BlackjackGame:
     def __init__(
@@ -89,16 +16,21 @@ class BlackjackGame:
         max_bet: int = 500,
         decks: int = 6,
         default_bank: int = 2500,
+        dealer_hits_soft_17: bool = False,
     ) -> None:
         self.table_id = table_id
         self.min_bet = min_bet
         self.max_bet = max_bet
         self.decks = decks
         self.default_bank = default_bank
+        self.dealer_hits_soft_17 = dealer_hits_soft_17
         self.random = secrets.SystemRandom()
 
         self.shoe: list[Card] = []
         self.cards_played = 0
+        self.shoe_serial = 0
+        self.pending_shuffle = False
+        self.pending_shuffle_remaining: int | None = None
         self.players: dict[str, SeatState] = {}
         self.seat_order: list[str] = []
         self.dealer = SeatState(user_id="dealer", display_name="Dealer", bank=0)
@@ -116,18 +48,40 @@ class BlackjackGame:
 
     def _reset_shoe(self) -> None:
         self.shoe = build_shoe(self.decks)
+        total = self.decks * 52
+        offset = self.shoe_serial * total
+        if offset:
+            for card in self.shoe:
+                card.index += offset
+        self.shoe_serial += 1
         self.random.shuffle(self.shoe)
         self.cards_played = 0
+
+    def _apply_pending_shuffle(self) -> None:
+        if not self.pending_shuffle:
+            return
+        remaining = self.pending_shuffle_remaining
+        self._reset_shoe()
+        self._log_event("shuffle", None, {"remaining": remaining or 0})
+        self.pending_shuffle = False
+        self.pending_shuffle_remaining = None
 
     def _maybe_reshuffle(self) -> None:
         remaining = len(self.shoe)
         total = self.decks * 52
         if remaining / total <= 0.25:
+            if self.is_round_active():
+                self.pending_shuffle = True
+                self.pending_shuffle_remaining = remaining
+                return
             self._reset_shoe()
             self._log_event("shuffle", None, {"remaining": remaining})
 
     def _draw_card(self) -> Card:
         self._maybe_reshuffle()
+        if not self.shoe:
+            self._reset_shoe()
+            self._log_event("shuffle", None, {"remaining": 0, "forced": True})
         card = self.shoe.pop()
         self.cards_played += 1
         return card
@@ -165,6 +119,8 @@ class BlackjackGame:
             )
             self.seat_order.append(user_id)
 
+
+
         for user_id in list(existing - incoming):
             self.players.pop(user_id, None)
             if user_id in self.seat_order:
@@ -190,6 +146,9 @@ class BlackjackGame:
         if not self.players:
             return "No players available."
 
+        self._apply_pending_shuffle()
+        self._maybe_reshuffle()
+
         self.round_id = uuid.uuid4().hex
         self.status = "dealing"
         self.show_dealer_hole_card = False
@@ -202,7 +161,7 @@ class BlackjackGame:
             if seat.bank < self.min_bet:
                 seat.hands.append(HandState(status="waiting", bet=0))
                 continue
-            bet = min(self.min_bet, seat.bank)
+            bet = min(self.min_bet, seat.bank, self.max_bet)
             seat.bank -= bet
             seat.hands.append(HandState(status="playing", bet=bet))
 
@@ -236,7 +195,7 @@ class BlackjackGame:
         if not self.is_round_active():
             return "No round in progress."
         self.show_dealer_hole_card = True
-        summary: dict[str, dict[str, int]] = {}
+        summary: Dict[str, Dict[str, int]] = {}
 
         for user_id, seat in self.players.items():
             for hand in seat.hands:
@@ -313,7 +272,9 @@ class BlackjackGame:
     def _set_next_active_player(self) -> bool:
         for user_id in self.seat_order:
             seat = self.players.get(user_id)
-            if not seat or not self._seat_has_playing_hand(seat):
+            if not seat:
+                continue
+            if not self._seat_has_playing_hand(seat):
                 continue
             for index, hand in enumerate(seat.hands):
                 if hand.status == "playing":
@@ -348,7 +309,9 @@ class BlackjackGame:
 
         for user_id in self.seat_order:
             seat = self.players.get(user_id)
-            if not seat or not self._seat_has_playing_hand(seat):
+            if not seat:
+                continue
+            if not self._seat_has_playing_hand(seat):
                 continue
             seat.active_hand_index = 0
             for idx, hand in enumerate(seat.hands):
@@ -415,11 +378,15 @@ class BlackjackGame:
             return "Not your turn."
         seat = self.players.get(user_id)
         hand = self._current_hand()
-        if not seat or not hand:
+        if not seat:
+            return "Seat not found."
+        if not hand:
             return "Hand is not active."
         if hand.status != "playing":
             return "Hand is not active."
         if len(hand.cards) != 2 or seat.bank < hand.bet or len(seat.hands) > 1:
+            return "Cannot double down."
+        if hand.bet * 2 > self.max_bet:
             return "Cannot double down."
 
         seat.bank -= hand.bet
@@ -445,11 +412,17 @@ class BlackjackGame:
             return "Not your turn."
         seat = self.players.get(user_id)
         hand = self._current_hand()
-        if not seat or not hand:
+        if not seat:
+            return "Seat not found."
+        if not hand:
             return "Hand is not active."
         if len(seat.hands) > 1 or len(hand.cards) != 2:
             return "Cannot split."
         if hand.cards[0].rank != hand.cards[1].rank:
+            # Special logic for 10, J, Q, K equality could be added if desired,
+            # but usually it's strict rank match.
+            # However, most casinos allow splitting any 10-value cards (e.g. J and K).
+            # The original code only checked rank equality. Let's stick to strict rank.
             return "Cannot split."
         if seat.bank < hand.bet:
             return "Not enough balance to split."
@@ -479,7 +452,7 @@ class BlackjackGame:
         while True:
             total = calculate_total(hand.cards)
             soft = is_soft_total(hand.cards)
-            if total < 17:
+            if total < 17 or (self.dealer_hits_soft_17 and total == 17 and soft):
                 card = self._draw_card()
                 hand.cards.append(card)
                 self._log_event("dealer_hit", "dealer", {"hand_id": hand.hand_id})
@@ -494,7 +467,7 @@ class BlackjackGame:
         dealer_bust = dealer_total > 21
         dealer_blackjack = dealer_total == 21 and len(dealer_hand.cards) == 2
 
-        summary: dict[str, dict[str, int]] = {}
+        summary: Dict[str, Dict[str, int]] = {}
 
         for user_id, seat in self.players.items():
             for hand in seat.hands:
@@ -522,7 +495,7 @@ class BlackjackGame:
 
                 payout = 0
                 if hand.result == "blackjack":
-                    payout = int(hand.bet * 2.5)
+                    payout = int(hand.bet * 2.5) # 3:2 payout (1.5 + 1 = 2.5)
                 elif hand.result == "win":
                     payout = hand.bet * 2
                 elif hand.result == "push":
@@ -540,7 +513,35 @@ class BlackjackGame:
         self.turn_ends_at = None
 
     def snapshot(self) -> dict:
+        def normalize_card(card: Card) -> dict:
+            rank = str(card.rank).upper()
+            if rank not in RANKS:
+                rank = "A"
+            suit = str(card.suit).lower()
+            if suit not in SUITS:
+                suit = "spades"
+            return {"rank": rank, "suit": suit, "index": card.index}
+
         players_payload: list[dict] = []
+        players_payload.append(
+            {
+                "userId": self.dealer.user_id,
+                "displayName": self.dealer.display_name,
+                "isDealer": True,
+                "bank": 0,
+                "hands": [
+                    {
+                        "id": hand.hand_id,
+                        "cards": [normalize_card(card) for card in hand.cards],
+                        "bet": 0,
+                        "result": hand.result,
+                        "status": hand.status,
+                    }
+                    for hand in self.dealer.hands
+                ],
+            }
+        )
+
         for user_id in self.seat_order:
             seat = self.players.get(user_id)
             if not seat:
@@ -554,10 +555,7 @@ class BlackjackGame:
                     "hands": [
                         {
                             "id": hand.hand_id,
-                            "cards": [
-                                {"rank": card.rank, "suit": card.suit, "index": card.index}
-                                for card in hand.cards
-                            ],
+                            "cards": [normalize_card(card) for card in hand.cards],
                             "bet": hand.bet,
                             "result": hand.result,
                             "status": hand.status,
@@ -567,31 +565,10 @@ class BlackjackGame:
                 }
             )
 
-        players_payload.append(
-            {
-                "userId": self.dealer.user_id,
-                "displayName": self.dealer.display_name,
-                "isDealer": True,
-                "bank": 0,
-                "hands": [
-                    {
-                        "id": hand.hand_id,
-                        "cards": [
-                            {"rank": card.rank, "suit": card.suit, "index": card.index}
-                            for card in hand.cards
-                        ],
-                        "bet": 0,
-                        "result": hand.result,
-                        "status": hand.status,
-                    }
-                    for hand in self.dealer.hands
-                ],
-            }
-        )
-
         return {
             "tableId": self.table_id,
             "status": self.status,
+            "roundId": self.round_id,
             "minBet": self.min_bet,
             "maxBet": self.max_bet,
             "cardsPlayed": self.cards_played,
@@ -599,6 +576,8 @@ class BlackjackGame:
             "showDealerHoleCard": self.show_dealer_hole_card,
             "activePlayerId": self.active_player_id,
             "activeHandId": self.active_hand_id,
+            "turnToken": self.turn_token,
             "turnEndsAt": self.turn_ends_at.isoformat() if self.turn_ends_at else None,
+            "serverTime": datetime.now(timezone.utc).isoformat(),
             "players": players_payload,
         }

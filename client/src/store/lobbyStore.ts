@@ -18,6 +18,7 @@ const demoTableSeed: LobbyTableSummary[] = [
     isPrivate: false,
     maxPlayers: 6,
     playerCount: 3,
+    ownerId: 'demo-owner',
   },
   {
     id: 'demo-midnight',
@@ -25,6 +26,7 @@ const demoTableSeed: LobbyTableSummary[] = [
     isPrivate: false,
     maxPlayers: 5,
     playerCount: 2,
+    ownerId: 'demo-owner',
   },
   {
     id: 'demo-vip',
@@ -32,6 +34,7 @@ const demoTableSeed: LobbyTableSummary[] = [
     isPrivate: true,
     maxPlayers: 4,
     playerCount: 1,
+    ownerId: 'demo-owner',
   },
 ]
 
@@ -71,6 +74,7 @@ type TableConfigPayload = {
   maxBet?: number
   decks?: number
   startingBank?: number
+  dealerHitsSoft17?: boolean
 }
 
 const buildDemoTableState = (
@@ -83,11 +87,15 @@ const buildDemoTableState = (
   isPrivate: summary.isPrivate,
   maxPlayers: summary.maxPlayers,
   inviteCode: summary.isPrivate ? summary.id.slice(0, 6).toUpperCase() : null,
+  ownerId: summary.ownerId ?? 'demo-owner',
+  isPaused: false,
+  bettingLocked: false,
   players: createDemoPlayers(overrideCount ?? summary.playerCount ?? 1),
   minBet: config?.minBet ?? 10,
   maxBet: config?.maxBet ?? 500,
   decks: config?.decks ?? 6,
   startingBank: config?.startingBank ?? 2500,
+  dealerHitsSoft17: false,
 })
 
 export type LobbyTableSummary = {
@@ -96,6 +104,8 @@ export type LobbyTableSummary = {
   isPrivate: boolean
   maxPlayers: number
   playerCount: number
+  minBet?: number
+  ownerId?: string | null
 }
 
 export type TablePlayer = {
@@ -110,6 +120,10 @@ export type TableState = {
   isPrivate: boolean
   maxPlayers: number
   inviteCode?: string | null
+  ownerId?: string | null
+  isPaused?: boolean
+  bettingLocked?: boolean
+  dealerHitsSoft17?: boolean
   players: TablePlayer[]
   minBet?: number
   maxBet?: number
@@ -125,6 +139,7 @@ export type CreateTablePayload = {
   maxBet: number
   decks: number
   startingBank: number
+  dealerHitsSoft17?: boolean
 }
 
 type LobbyState = {
@@ -143,6 +158,10 @@ type LobbyState = {
   joinTable: (tableId: string) => void
   leaveTable: () => void
   setReady: (ready: boolean) => void
+  pauseTable: (paused: boolean) => void
+  lockBetting: (locked: boolean) => void
+  kickPlayer: (userId: string) => void
+  mutePlayer: (userId: string, durationSeconds: number) => void
   clearError: () => void
 }
 
@@ -291,6 +310,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
         isPrivate: payload.isPrivate,
         maxPlayers: payload.maxPlayers,
         playerCount: 1,
+        ownerId: getDemoPlayer().userId,
       }
       const tableState = buildDemoTableState(summary, 1, payload)
       set((state) => ({
@@ -315,6 +335,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
           isPrivate: true,
           maxPlayers: 6,
           playerCount: 1,
+          ownerId: getDemoPlayer().userId,
         } satisfies LobbyTableSummary)
       const playerCount = Math.max(1, summary.playerCount)
       const tableState = buildDemoTableState(summary, playerCount)
@@ -363,6 +384,24 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     }
     const socket = get().socket
     if (socket?.connected) socket.emit('table:ready', { ready })
+  },
+  pauseTable: (paused) => {
+    const socket = get().socket
+    if (socket?.connected) socket.emit('table:pause', { paused })
+  },
+  lockBetting: (locked) => {
+    const socket = get().socket
+    if (socket?.connected) socket.emit('table:betting', { locked })
+  },
+  kickPlayer: (userId) => {
+    const socket = get().socket
+    if (socket?.connected) socket.emit('table:kick', { userId })
+  },
+  mutePlayer: (userId, durationSeconds) => {
+    const socket = get().socket
+    if (socket?.connected) {
+      socket.emit('table:mute', { userId, durationSeconds })
+    }
   },
   clearError: () => set({ error: null }),
 }))

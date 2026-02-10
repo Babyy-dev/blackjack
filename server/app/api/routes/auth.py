@@ -10,11 +10,13 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.deps import get_current_user, get_db
+from app.core.rate_limit import is_rate_limited
 from app.core.security import (
     create_access_token,
     create_refresh_token,
     hash_password,
     hash_refresh_token,
+    validate_password_strength,
     verify_password,
 )
 from app.db.models import Profile, User, UserSession
@@ -29,6 +31,24 @@ from app.schemas.auth import (
 from app.schemas.user import UserPublic
 
 router = APIRouter()
+
+
+def _rate_limit_key(action: str, ip: str, identifier: str | None = None) -> str:
+    safe_identifier = (identifier or "anon").strip().lower()
+    return f"rl:{action}:{ip}:{safe_identifier}"
+
+
+def _enforce_rate_limit(
+    action: str,
+    request: Request,
+    identifier: str | None,
+    limit: int,
+) -> None:
+    ip = request.client.host if request.client else "unknown"
+    if is_rate_limited(_rate_limit_key(f"{action}:ip", ip), settings.auth_ip_rate_limit, settings.auth_rate_limit_window_seconds):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many requests")
+    if is_rate_limited(_rate_limit_key(action, ip, identifier), limit, settings.auth_rate_limit_window_seconds):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many requests")
 
 
 def build_token_pair(
@@ -77,6 +97,11 @@ def register(
     request: Request,
     db: Session = Depends(get_db),
 ) -> AuthResponse:
+    _enforce_rate_limit("register", request, payload.email.lower(), settings.auth_register_rate_limit)
+    password_error = validate_password_strength(payload.password)
+    if password_error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=password_error)
+
     email = payload.email.lower()
     existing = db.scalar(select(User).where(User.email == email))
     if existing:
@@ -106,6 +131,7 @@ def login(
     request: Request,
     db: Session = Depends(get_db),
 ) -> AuthResponse:
+    _enforce_rate_limit("login", request, payload.email.lower(), settings.auth_login_rate_limit)
     user = db.scalar(select(User).where(User.email == payload.email.lower()))
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
@@ -119,8 +145,10 @@ def login(
 @router.post("/refresh", response_model=TokenPair)
 def refresh_tokens(
     payload: RefreshRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> TokenPair:
+    _enforce_rate_limit("refresh", request, None, settings.auth_refresh_rate_limit)
     try:
         token_payload = jwt.decode(
             payload.refresh_token,

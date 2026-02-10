@@ -7,6 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "Vlackjack API"
+    environment: str = "development"
     api_prefix: str = "/api"
     database_url: str = "postgresql+psycopg2://vlackjack:vlackjack@localhost:5432/vlackjack"
     jwt_secret_key: str = "change-me"
@@ -26,6 +27,14 @@ class Settings(BaseSettings):
     sol_usd_rate: float = 100.0
     crypto_min_withdrawal: int = 10
     crypto_max_withdrawal: int = 100000
+    auth_rate_limit_window_seconds: int = 60
+    auth_login_rate_limit: int = 10
+    auth_register_rate_limit: int = 5
+    auth_refresh_rate_limit: int = 20
+    auth_ip_rate_limit: int = 40
+    vapid_public_key: str | None = None
+    vapid_private_key: str | None = None
+    vapid_subject: str = "mailto:admin@example.com"
     default_admin_email: str | None = None
     default_admin_password: str | None = None
     default_admin_display_name: str = "Admin"

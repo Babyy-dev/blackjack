@@ -11,6 +11,7 @@ const PlayerToolbar = () => {
   const split = useGameStore((state) => state.split)
   const endHand = useGameStore((state) => state.endHand)
   const hit = useGameStore((state) => state.hit)
+  const isActionPending = useGameStore((state) => state.isActionPending)
   const userId = useAuthStore((state) => state.user?.id)
 
   const isMyTurn = !activePlayer?.userId || activePlayer.userId === userId
@@ -35,17 +36,20 @@ const PlayerToolbar = () => {
 
   return (
     <div className="player-toolbar" role="toolbar">
-      <button disabled={!canDoubleDown || !isMyTurn} onClick={() => void doubleDown()}>
+      <button
+        disabled={!canDoubleDown || !isMyTurn || isActionPending}
+        onClick={() => void doubleDown()}
+      >
         Double<br />Down
       </button>
-      <button disabled={!canSplit || !isMyTurn} onClick={() => void split()}>
+      <button disabled={!canSplit || !isMyTurn || isActionPending} onClick={() => void split()}>
         Split
       </button>
       <PlayerBank />
-      <button disabled={isDealing || !isMyTurn} onClick={() => void endHand()}>
+      <button disabled={isDealing || !isMyTurn || isActionPending} onClick={() => void endHand()}>
         Stand
       </button>
-      <button disabled={isDealing || !isMyTurn} onClick={() => void hit()}>
+      <button disabled={isDealing || !isMyTurn || isActionPending} onClick={() => void hit()}>
         Hit
       </button>
     </div>

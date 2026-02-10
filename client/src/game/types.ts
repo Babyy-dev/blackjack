@@ -34,6 +34,8 @@ export type GameState = {
   minBet?: number
   maxBet?: number
   turnEndsAt?: string | null
+  roundId?: string | null
+  lastTurnToken?: number
 }
 
 export class Hand {

@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 import socketio
 from sqlalchemy import select
 
-from app.api.routes import admin, auth, health, profile, wallet, webhooks
+from app.api.routes import admin, auth, health, profile, stats, wallet, webhooks, friends
 from app.core.config import settings
 from app.core.security import hash_password
 from app.db.models import Profile, User, Wallet
@@ -31,14 +31,37 @@ fastapi_app.include_router(health.router)
 fastapi_app.include_router(auth.router, prefix=f"{settings.api_prefix}/auth", tags=["auth"])
 fastapi_app.include_router(profile.router, prefix=f"{settings.api_prefix}/profile", tags=["profile"])
 fastapi_app.include_router(wallet.router, prefix=f"{settings.api_prefix}/wallet", tags=["wallet"])
+fastapi_app.include_router(friends.router, prefix=f"{settings.api_prefix}/friends", tags=["friends"])
 fastapi_app.include_router(admin.router, prefix=f"{settings.api_prefix}/admin", tags=["admin"])
+fastapi_app.include_router(stats.router, prefix=f"{settings.api_prefix}/stats", tags=["stats"])
 fastapi_app.include_router(webhooks.router, tags=["webhooks"])
 
 
 @fastapi_app.on_event("startup")
 def ensure_upload_paths() -> None:
     settings.avatar_upload_path.mkdir(parents=True, exist_ok=True)
+    validate_security_settings()
     ensure_default_admin()
+
+
+def validate_security_settings() -> None:
+    issues: list[str] = []
+    if not settings.jwt_secret_key or settings.jwt_secret_key == "change-me":
+        issues.append("JWT secret is not set.")
+    elif len(settings.jwt_secret_key) < 32:
+        issues.append("JWT secret should be at least 32 characters.")
+    if not settings.crypto_webhook_secret or settings.crypto_webhook_secret == "change-me":
+        issues.append("Crypto webhook secret is not set.")
+    if settings.environment.lower() == "production" and "*" in settings.allowed_origins:
+        issues.append("Allowed origins cannot include '*' in production.")
+
+    if not issues:
+        return
+
+    message = "Security settings warning: " + "; ".join(issues)
+    if settings.environment.lower() == "production":
+        raise RuntimeError(message)
+    logger.warning(message)
 
 
 def ensure_default_admin() -> None:

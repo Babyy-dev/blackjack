@@ -1,4 +1,4 @@
-import { CardSuits, CardValue } from '@/cards'
+import type { CardSuits, CardValue } from '@/cards'
 
 export type CardSuit = (typeof CardSuits)[number]
 export type CardRank = keyof typeof CardValue

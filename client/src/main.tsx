@@ -6,6 +6,7 @@ import App from './App'
 import './index.css'
 import './styles/base.css'
 import './styles/game.css'
+import './vue-game/register'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,3 +26,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </React.StrictMode>,
 )
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+  })
+}

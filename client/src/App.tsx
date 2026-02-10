@@ -7,11 +7,13 @@ import RequireAuth from './components/RequireAuth'
 import LandingPage from './pages/LandingPage'
 import AuthPage from './pages/AuthPage'
 import ProfilePage from './pages/ProfilePage'
+import LeaderboardPage from './pages/LeaderboardPage'
 import LobbyPage from './pages/LobbyPage'
 import TablePage from './pages/TablePage'
 import WalletPage from './pages/WalletPage'
 import AdminPage from './pages/AdminPage'
 import GamePage from './pages/GamePage'
+import FriendsPage from './pages/FriendsPage'
 import NotFoundPage from './pages/NotFoundPage'
 import { useAuthStore } from './store/authStore'
 import { useLobbyStore } from './store/lobbyStore'
@@ -57,6 +59,22 @@ const App = () => {
           element={
             <RequireAuth>
               <LobbyPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/leaderboard"
+          element={
+            <RequireAuth>
+              <LeaderboardPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/friends"
+          element={
+            <RequireAuth>
+              <FriendsPage />
             </RequireAuth>
           }
         />

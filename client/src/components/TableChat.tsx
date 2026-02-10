@@ -6,6 +6,7 @@ const MAX_MESSAGE_LENGTH = 280
 
 type TableChatProps = {
   variant?: 'default' | 'game'
+  layout?: 'dock' | 'overlay'
 }
 
 const formatTime = (value: string) => {
@@ -14,7 +15,7 @@ const formatTime = (value: string) => {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-const TableChat = ({ variant = 'default' }: TableChatProps) => {
+const TableChat = ({ variant = 'default', layout = 'dock' }: TableChatProps) => {
   const socket = useLobbyStore((state) => state.socket)
   const isConnected = useLobbyStore((state) => state.isConnected)
   const tableId = useLobbyStore((state) => state.currentTableId)
@@ -72,7 +73,7 @@ const TableChat = ({ variant = 'default' }: TableChatProps) => {
 
   if (isGame) {
     return (
-      <section className="game-chat" aria-live="polite">
+      <section className={`game-chat game-chat--${layout}`} aria-live="polite">
         <header className="game-chat__header">
           <div>
             <p className="game-chat__eyebrow">Live table</p>

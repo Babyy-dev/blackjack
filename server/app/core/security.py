@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from datetime import datetime, timedelta, timezone
 
 from jose import jwt
@@ -9,6 +10,24 @@ from passlib.context import CryptContext
 from app.core.config import settings
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
+_PASSWORD_RULES = [
+    (re.compile(r"[a-z]"), "Password must include a lowercase letter."),
+    (re.compile(r"[A-Z]"), "Password must include an uppercase letter."),
+    (re.compile(r"[0-9]"), "Password must include a number."),
+    (re.compile(r"[^A-Za-z0-9]"), "Password must include a symbol."),
+]
+
+
+def validate_password_strength(password: str) -> str | None:
+    if len(password) < 8:
+        return "Password must be at least 8 characters."
+    if len(password) > 128:
+        return "Password must be 128 characters or fewer."
+    for pattern, message in _PASSWORD_RULES:
+        if not pattern.search(password):
+            return message
+    return None
 
 
 def hash_password(password: str) -> str:

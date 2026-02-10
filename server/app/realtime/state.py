@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import uuid
 
-from app.game.blackjack import BlackjackGame
+from app.game.engine import BlackjackGame
 
 
 MIN_TABLE_PLAYERS = 2
@@ -18,6 +18,7 @@ class TableConfig:
     max_bet: int = 500
     decks: int = 6
     starting_bank: int = 2500
+    dealer_hits_soft_17: bool = False
 
 
 @dataclass
@@ -56,6 +57,7 @@ class PlayerState:
     is_ready: bool = False
     last_chat_at: datetime | None = None
     muted_until: datetime | None = None
+    last_action_at: datetime | None = None
 
 
 @dataclass
@@ -64,6 +66,7 @@ class TableState:
     name: str
     is_private: bool
     max_players: int
+    owner_id: str
     invite_code: str | None = None
     config: TableConfig = field(default_factory=TableConfig)
     is_paused: bool = False
@@ -79,6 +82,8 @@ class TableState:
             "isPrivate": self.is_private,
             "maxPlayers": self.max_players,
             "playerCount": len(self.players),
+            "ownerId": self.owner_id,
+            "minBet": self.config.min_bet,
         }
 
     def snapshot(self) -> dict:
@@ -88,12 +93,14 @@ class TableState:
             "isPrivate": self.is_private,
             "maxPlayers": self.max_players,
             "inviteCode": self.invite_code,
+            "ownerId": self.owner_id,
             "isPaused": self.is_paused,
             "bettingLocked": self.betting_locked,
             "minBet": self.config.min_bet,
             "maxBet": self.config.max_bet,
             "decks": self.config.decks,
             "startingBank": self.config.starting_bank,
+            "dealerHitsSoft17": self.config.dealer_hits_soft_17,
             "players": [
                 {
                     "userId": player.user_id,
@@ -111,6 +118,7 @@ class LobbyState:
         self.sid_to_player: dict[str, PlayerState] = {}
         self.user_to_table: dict[str, str] = {}
         self.invite_codes: dict[str, str] = {}
+        self.online_users: set[str] = set()
 
     def list_tables(self) -> list[dict]:
         return [table.summary() for table in self.tables.values() if not table.is_private]
@@ -121,7 +129,9 @@ class LobbyState:
 
     def _register_invite_code(self, table_id: str) -> str:
         while True:
-            code = uuid.uuid4().hex[:6].upper()
+            # uuid4() returns a UUID object, .hex is a string property
+            val = uuid.uuid4().hex
+            code = val[:6].upper()
             if code not in self.invite_codes:
                 self.invite_codes[code] = table_id
                 return code
@@ -138,6 +148,7 @@ class LobbyState:
                 max_bet=table.config.max_bet,
                 decks=table.config.decks,
                 default_bank=table.config.starting_bank,
+                dealer_hits_soft_17=table.config.dealer_hits_soft_17,
             )
         table.game.sync_players(
             [(player.user_id, player.display_name) for player in table.players.values()]
@@ -158,13 +169,28 @@ class LobbyState:
             muted_until=muted_until,
         )
         self.sid_to_player[sid] = player
+        self.online_users.add(user_id)
         return player
 
     def get_player(self, sid: str) -> PlayerState | None:
         return self.sid_to_player.get(sid)
 
+    def get_player_by_user_id(self, user_id: str) -> PlayerState | None:
+        for player in self.sid_to_player.values():
+            if player.user_id == user_id:
+                return player
+        return None
+
     def get_user_table(self, user_id: str) -> str | None:
         return self.user_to_table.get(user_id)
+
+    def is_user_online(self, user_id: str) -> bool:
+        return user_id in self.online_users
+
+    def get_user_sids(self, user_id: str) -> list[str]:
+        return [
+            sid for sid, player in self.sid_to_player.items() if player.user_id == user_id
+        ]
 
     def unregister_player(
         self, sid: str
@@ -172,6 +198,8 @@ class LobbyState:
         player = self.sid_to_player.pop(sid, None)
         if not player:
             return None, None, False
+        if not any(p.user_id == player.user_id for p in self.sid_to_player.values()):
+            self.online_users.discard(player.user_id)
         return self.remove_from_table(player)
 
     def remove_from_table(
@@ -184,6 +212,10 @@ class LobbyState:
         if not table:
             return table_id, None, False
         table.players.pop(player.user_id, None)
+        if table.owner_id == player.user_id:
+            next_owner = next(iter(table.players.values()), None)
+            if next_owner:
+                table.owner_id = next_owner.user_id
         if table.game:
             table.game.sync_players(
                 [(seat.user_id, seat.display_name) for seat in table.players.values()]
@@ -211,6 +243,7 @@ class LobbyState:
             name=name or "Table",
             is_private=is_private,
             max_players=normalized_max,
+            owner_id=player.user_id,
             invite_code=invite_code,
             config=config or TableConfig(),
         )

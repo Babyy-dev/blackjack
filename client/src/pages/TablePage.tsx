@@ -16,6 +16,10 @@ const TablePage = () => {
     joinTable,
     leaveTable,
     setReady,
+    pauseTable,
+    lockBetting,
+    kickPlayer,
+    mutePlayer,
     socket,
   } = useLobbyStore()
   const bindSocket = useGameStore((state) => state.bindSocket)
@@ -34,6 +38,9 @@ const TablePage = () => {
   }, [bindSocket, socket, currentTableId])
 
   const players = currentTable?.players ?? []
+  const isOwner = Boolean(currentTable?.ownerId && currentTable?.ownerId === user?.id)
+  const isPaused = Boolean(currentTable?.isPaused)
+  const bettingLocked = Boolean(currentTable?.bettingLocked)
   const myPlayer = useMemo(() => {
     if (!user?.id) return null
     return players.find((player) => player.userId === user.id) ?? null
@@ -48,6 +55,10 @@ const TablePage = () => {
     gameStatus && !['waiting', 'round_end'].includes(gameStatus)
   const statusMessage = !currentTable
     ? 'Joining table and syncing seats...'
+    : isPaused
+      ? 'Table is paused by the host.'
+      : bettingLocked
+        ? 'Betting is locked by the host.'
     : allReady
       ? 'All players are ready. Waiting for the dealer to start the round.'
       : 'Waiting for players to ready up before the round begins.'
@@ -90,6 +101,19 @@ const TablePage = () => {
     window.setTimeout(() => setCopyMessage(null), 2200)
   }
 
+  const copyInviteLink = async () => {
+    if (!displayCode || displayCode === '--') return
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const link = `${origin}/table/${displayCode}`
+    try {
+      await navigator.clipboard.writeText(link)
+      setCopyMessage('Invite link copied.')
+    } catch {
+      setCopyMessage('Copy failed. Please select and copy manually.')
+    }
+    window.setTimeout(() => setCopyMessage(null), 2200)
+  }
+
   return (
     <div className="mx-auto flex w-full flex-col gap-8 px-6 py-10 sm:py-12">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -108,6 +132,13 @@ const TablePage = () => {
               className="rounded-full border border-amber-300/60 px-3 py-1 text-amber-200 transition hover:border-amber-300 hover:text-amber-100"
             >
               Copy invite
+            </button>
+            <button
+              type="button"
+              onClick={() => void copyInviteLink()}
+              className="rounded-full border border-amber-300/60 px-3 py-1 text-amber-200 transition hover:border-amber-300 hover:text-amber-100"
+            >
+              Copy invite link
             </button>
             {copyMessage && <span className="text-emerald-200">{copyMessage}</span>}
           </div>
@@ -159,6 +190,24 @@ const TablePage = () => {
               {myPlayer?.isReady ? 'Unready' : 'Ready'}
             </button>
           </div>
+          {isOwner && (
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => pauseTable(!isPaused)}
+                className="rounded-full border border-white/20 px-4 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.25rem] text-white transition hover:border-amber-300/70 hover:text-amber-200"
+              >
+                {isPaused ? 'Resume table' : 'Pause table'}
+              </button>
+              <button
+                type="button"
+                onClick={() => lockBetting(!bettingLocked)}
+                className="rounded-full border border-white/20 px-4 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.25rem] text-white transition hover:border-amber-300/70 hover:text-amber-200"
+              >
+                {bettingLocked ? 'Unlock betting' : 'Lock betting'}
+              </button>
+            </div>
+          )}
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             {players.map((player) => (
               <div
@@ -166,13 +215,33 @@ const TablePage = () => {
                 className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#08161c] px-4 py-3 text-sm text-white/70"
               >
                 <span>{player.displayName}</span>
-                <span
-                  className={`text-xs uppercase tracking-[0.2rem] ${
-                    player.isReady ? 'text-emerald-300' : 'text-white/40'
-                  }`}
-                >
-                  {player.isReady ? 'Ready' : 'Waiting'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-xs uppercase tracking-[0.2rem] ${
+                      player.isReady ? 'text-emerald-300' : 'text-white/40'
+                    }`}
+                  >
+                    {player.isReady ? 'Ready' : 'Waiting'}
+                  </span>
+                  {isOwner && player.userId !== user?.id && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => mutePlayer(player.userId, 300)}
+                        className="rounded-full border border-amber-300/50 px-2 py-1 text-[0.5rem] font-semibold uppercase tracking-[0.2rem] text-amber-200 transition hover:border-amber-300 hover:text-amber-100"
+                      >
+                        Mute 5m
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => kickPlayer(player.userId)}
+                        className="rounded-full border border-red-400/50 px-2 py-1 text-[0.5rem] font-semibold uppercase tracking-[0.2rem] text-red-200 transition hover:border-red-300 hover:text-red-100"
+                      >
+                        Kick
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -214,6 +283,14 @@ const TablePage = () => {
                 </p>
                 <p className="mt-2 text-lg font-semibold text-white">
                   {currentTable?.startingBank ?? '--'}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-[#08161c] px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.2rem] text-white/50">
+                  Dealer soft 17
+                </p>
+                <p className="mt-2 text-lg font-semibold text-white">
+                  {currentTable?.dealerHitsSoft17 ? 'Hits' : 'Stands'}
                 </p>
               </div>
             </div>
